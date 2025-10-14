@@ -302,10 +302,24 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const stream = canvas.captureStream(30);
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 5000000,
+    // Capture video stream from canvas
+    const canvasStream = canvas.captureStream(30);
+    
+    // Get audio track from the original video
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaElementSource(video);
+    const destination = audioContext.createMediaStreamDestination();
+    source.connect(destination);
+    source.connect(audioContext.destination);
+    
+    // Combine video and audio tracks
+    const videoTrack = canvasStream.getVideoTracks()[0];
+    const audioTrack = destination.stream.getAudioTracks()[0];
+    const combinedStream = new MediaStream([videoTrack, audioTrack]);
+    
+    const mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: 'video/webm;codecs=vp9,opus',
+      videoBitsPerSecond: 8000000,
     });
 
     const chunks: Blob[] = [];
@@ -346,12 +360,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       );
 
       activeCaptions.forEach((caption) => {
-        const fontSize = caption.fontSize || 32;
+        // Scale font size based on video height to ensure visibility
+        const baseFontSize = caption.fontSize || 32;
+        const scaledFontSize = Math.max(baseFontSize, canvas.height * 0.05); // At least 5% of video height
         const fontFamily = caption.fontFamily || 'Inter';
         const color = caption.color || '#ffffff';
         const bgColor = caption.backgroundColor || 'transparent';
         
-        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.font = `bold ${scaledFontSize}px ${fontFamily}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -360,18 +376,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
         if (bgColor !== 'transparent') {
           const metrics = ctx.measureText(caption.word);
-          const padding = 10;
+          const padding = scaledFontSize * 0.3;
           ctx.fillStyle = bgColor;
           ctx.fillRect(
             x - metrics.width / 2 - padding,
-            y - fontSize / 2 - padding,
+            y - scaledFontSize / 2 - padding,
             metrics.width + padding * 2,
-            fontSize + padding * 2
+            scaledFontSize + padding * 2
           );
         }
 
+        // Add text stroke for better readability
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = scaledFontSize * 0.08;
         ctx.strokeText(caption.word, x, y);
         
         ctx.fillStyle = color;
@@ -383,6 +400,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       } else {
         mediaRecorder.stop();
         video.pause();
+        audioContext.close();
       }
     };
 
