@@ -277,20 +277,49 @@ export const EditorWorkspace = () => {
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 />
                 {/* Caption overlay on video */}
-                {captions.find(c => currentTime >= c.start && currentTime <= c.end) && (
-                  <div 
-                    className="absolute inset-x-0 bottom-16 pb-8 flex items-center justify-center pointer-events-none"
-                    style={{
-                      fontFamily: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.fontFamily || "Inter",
-                      fontSize: `${captions.find(c => currentTime >= c.start && currentTime <= c.end)?.fontSize || 32}px`,
-                      color: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.color || "#ffffff",
-                      textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                      fontWeight: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.isKeyword ? "bold" : "normal",
-                    }}
-                  >
-                    {captions.find(c => currentTime >= c.start && currentTime <= c.end)?.word}
-                  </div>
-                )}
+                {(() => {
+                  const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
+                  if (currentIndex === -1) return null;
+                  
+                  // Get 2 words before and 2 words after the current word (total 5 words)
+                  const startIndex = Math.max(0, currentIndex - 2);
+                  const endIndex = Math.min(captions.length, currentIndex + 3);
+                  const visibleWords = captions.slice(startIndex, endIndex);
+                  
+                  const currentCaption = captions[currentIndex];
+                  
+                  return (
+                    <div 
+                      className="absolute inset-x-0 bottom-16 pb-8 flex items-center justify-center pointer-events-none px-8"
+                      style={{
+                        fontFamily: currentCaption.fontFamily || "Inter",
+                        fontSize: `${currentCaption.fontSize || 32}px`,
+                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                      }}
+                    >
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        {visibleWords.map((caption, idx) => {
+                          const isCurrentWord = startIndex + idx === currentIndex;
+                          return (
+                            <span
+                              key={startIndex + idx}
+                              style={{
+                                color: caption.color || "#ffffff",
+                                fontWeight: caption.isKeyword ? "bold" : "normal",
+                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
+                                padding: isCurrentWord ? "4px 12px" : "0",
+                                borderRadius: isCurrentWord ? "8px" : "0",
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              {caption.word}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
             <CaptionTimeline
