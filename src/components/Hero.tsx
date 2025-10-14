@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Sparkles, Wand2, Zap } from "lucide-react";
 
 interface HeroProps {
   onTryNow: () => void;
@@ -7,37 +7,73 @@ interface HeroProps {
 
 export const Hero = ({ onTryNow }: HeroProps) => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/30 py-20 px-6">
-      <div className="max-w-6xl mx-auto text-center">
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Turn captions into creative typographies — instantly.
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden py-20 px-6">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 gradient-rainbow opacity-20 animate-rainbow bg-[length:200%_200%]" />
+      
+      <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8 animate-slide-up">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/80 backdrop-blur-sm border-2 border-primary shadow-glow animate-bounce-in">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="text-sm font-bebas tracking-wider text-primary">AI-Powered Caption Magic</span>
+        </div>
+
+        {/* Main heading */}
+        <h1 className="text-6xl md:text-8xl font-bebas tracking-tight">
+          <span className="text-gradient block mb-2 bg-[length:200%_200%] animate-rainbow">
+            CAPTIONX.IO
+          </span>
+          <span className="text-foreground text-4xl md:text-5xl font-poppins font-light">
+            Transform Your Captions
+          </span>
         </h1>
-        
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-          CaptionX.io lets you edit each word individually — move, resize, and restyle captions easily with trending typography templates.
+
+        {/* Description */}
+        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-poppins">
+          Edit <span className="text-primary font-semibold">each word</span> individually. 
+          Choose from <span className="text-accent font-semibold">stunning fonts</span>. 
+          Create <span className="gradient-pink-purple text-transparent bg-clip-text font-semibold">creative typographies</span> instantly.
         </p>
-        
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Button 
-            size="lg" 
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          <Button
             onClick={onTryNow}
-            className="text-lg px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
+            size="lg"
+            className="gradient-purple-blue text-white hover:scale-105 transition-all duration-300 shadow-glow text-lg px-8 py-6 rounded-2xl font-bebas tracking-wider"
           >
-            Try Now
+            <Wand2 className="w-5 h-5 mr-2" />
+            Start Creating
           </Button>
-          <Button 
-            size="lg" 
+          <Button
             variant="outline"
-            className="text-lg px-8 py-6 rounded-xl border-2 hover:bg-accent transition-all"
+            size="lg"
+            className="border-2 border-primary hover:bg-primary/10 transition-all duration-300 text-lg px-8 py-6 rounded-2xl font-bebas tracking-wider"
           >
-            <Play className="w-5 h-5 mr-2" />
-            Watch Demo
+            <Zap className="w-5 h-5 mr-2" />
+            See Demo
           </Button>
         </div>
-        
-        {/* Decorative elements */}
-        <div className="absolute top-10 left-10 w-20 h-20 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 right-10 w-32 h-32 bg-accent/30 rounded-full blur-3xl"></div>
+
+        {/* Feature highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
+          {[
+            { icon: "🎨", title: "Creative Fonts", color: "gradient-pink-purple" },
+            { icon: "⚡", title: "AI Transcription", color: "gradient-purple-blue" },
+            { icon: "✨", title: "Word-by-Word Edit", color: "gradient-blue-cyan" },
+          ].map((feature, idx) => (
+            <div
+              key={idx}
+              className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-border hover:scale-105 transition-all duration-300 animate-bounce-in shadow-glow"
+              style={{ animationDelay: `${idx * 0.1}s` }}
+            >
+              <div className="text-4xl mb-3">{feature.icon}</div>
+              <h3 className={`font-bebas text-xl tracking-wide ${feature.color} text-transparent bg-clip-text`}>
+                {feature.title}
+              </h3>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

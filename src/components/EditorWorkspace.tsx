@@ -246,20 +246,31 @@ export const EditorWorkspace = () => {
   return (
     <section className="py-12 px-6">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8 animate-slide-up">
+          <h2 className="text-5xl font-bebas tracking-wide text-gradient mb-2 bg-[length:200%_200%] animate-rainbow">
+            Caption Editor Studio
+          </h2>
+          <p className="text-muted-foreground font-poppins">Create magic with every word ✨</p>
+        </div>
+
         {isProcessing && (
-          <div className="mb-6 bg-card p-6 rounded-lg border border-border">
+          <div className="mb-6 bg-white/80 backdrop-blur-sm p-6 rounded-2xl border-2 border-primary shadow-glow animate-bounce-in">
             <div className="flex items-center gap-3 mb-4">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              <h3 className="text-lg font-semibold">Generating Captions...</h3>
+              <h3 className="text-lg font-bebas tracking-wide text-primary">Generating Captions...</h3>
             </div>
-            <Progress value={progress} className="mb-2" />
-            <p className="text-sm text-muted-foreground">{progress}% complete</p>
+            <Progress value={progress} className="mb-2 h-3" />
+            <p className="text-sm text-muted-foreground font-poppins">{progress}% complete</p>
           </div>
         )}
 
         {captions.length > 0 && (
-          <div className="mb-4 flex justify-end">
-            <Button onClick={downloadASS} variant="outline">
+          <div className="mb-6 flex justify-end animate-slide-up">
+            <Button 
+              onClick={downloadASS} 
+              className="gradient-purple-blue text-white hover:scale-105 transition-all shadow-glow font-bebas tracking-wider"
+            >
               <Download className="w-4 h-4 mr-2" />
               Download .ASS Captions
             </Button>
@@ -268,16 +279,18 @@ export const EditorWorkspace = () => {
         
         {/* Word Editor - Top */}
         {captions.length > 0 && (
-          <WordEditor
-            caption={selectedCaption}
-            onUpdate={handleWordUpdate}
-          />
+          <div className="mb-6 animate-bounce-in">
+            <WordEditor
+              caption={selectedCaption}
+              onUpdate={handleWordUpdate}
+            />
+          </div>
         )}
 
         {/* Video Preview and Timeline - Below */}
-        <div className="space-y-6">
+        <div className="space-y-6 animate-slide-up">
           {videoUrl && (
-            <div className="relative w-full">
+            <div className="relative w-full bg-white/60 backdrop-blur-sm p-4 rounded-2xl border-2 border-primary shadow-glow">
               <video
                 ref={videoRef}
                 src={videoUrl}

@@ -64,17 +64,17 @@ export const WordEditor = ({ caption, onUpdate }: WordEditorProps) => {
 
   if (!caption) {
     return (
-      <div className="p-6 border rounded-lg bg-muted/30">
-        <p className="text-muted-foreground text-center">
-          Select a word from the timeline to edit
+      <div className="p-8 bg-white/60 backdrop-blur-sm rounded-2xl border-2 border-dashed border-primary/50">
+        <p className="text-muted-foreground text-center font-poppins">
+          ✨ Select a word from the timeline to edit
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-6 border rounded-lg">
-      <h3 className="font-semibold text-lg">Edit Word</h3>
+    <div className="space-y-4 p-6 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-primary shadow-glow">
+      <h3 className="font-bebas text-2xl tracking-wide text-gradient bg-[length:200%_200%]">Edit Word ✏️</h3>
 
       <div className="space-y-2">
         <Label htmlFor="word-text">Text</Label>

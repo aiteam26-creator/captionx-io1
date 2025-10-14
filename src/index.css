@@ -8,44 +8,64 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Pastel beige and white theme */
-    --background: 35 25% 97%;
-    --foreground: 25 20% 15%;
+    /* Vibrant Creative Rainbow Theme */
+    --background: 250 100% 98%;
+    --foreground: 280 90% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 25 20% 15%;
+    --card-foreground: 280 90% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 25 20% 15%;
+    --popover-foreground: 280 90% 15%;
 
-    --primary: 25 60% 55%;
+    --primary: 280 85% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 40% 92%;
-    --secondary-foreground: 25 20% 15%;
+    --secondary: 200 95% 65%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 35 30% 94%;
-    --muted-foreground: 25 15% 45%;
+    --muted: 250 60% 96%;
+    --muted-foreground: 280 40% 45%;
 
-    --accent: 30 55% 88%;
-    --accent-foreground: 25 20% 15%;
+    --accent: 340 95% 65%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 20% 88%;
-    --input: 35 20% 88%;
-    --ring: 25 60% 55%;
+    --border: 250 50% 90%;
+    --input: 250 50% 94%;
+    --ring: 280 85% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
     
-    /* Custom design tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(35 40% 96%), hsl(30 50% 94%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(35 30% 98%));
-    --shadow-soft: 0 2px 8px -2px hsl(25 20% 15% / 0.06);
-    --shadow-medium: 0 4px 16px -4px hsl(25 20% 15% / 0.1);
-    --shadow-large: 0 12px 32px -8px hsl(25 20% 15% / 0.15);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Rainbow gradient tokens */
+    --gradient-rainbow: linear-gradient(135deg, 
+      hsl(340 95% 65%), 
+      hsl(280 85% 60%), 
+      hsl(220 90% 65%), 
+      hsl(180 95% 60%), 
+      hsl(140 90% 55%), 
+      hsl(60 95% 55%));
+    
+    --gradient-purple-blue: linear-gradient(135deg, hsl(280 85% 60%), hsl(220 90% 65%));
+    --gradient-blue-cyan: linear-gradient(135deg, hsl(220 90% 65%), hsl(180 95% 60%));
+    --gradient-pink-purple: linear-gradient(135deg, hsl(340 95% 65%), hsl(280 85% 60%));
+    --gradient-cyan-green: linear-gradient(135deg, hsl(180 95% 60%), hsl(140 90% 55%));
+    
+    /* Custom color tokens */
+    --color-rainbow-pink: 340 95% 65%;
+    --color-rainbow-purple: 280 85% 60%;
+    --color-rainbow-blue: 220 90% 65%;
+    --color-rainbow-cyan: 180 95% 60%;
+    --color-rainbow-green: 140 90% 55%;
+    --color-rainbow-yellow: 60 95% 55%;
+    --color-rainbow-orange: 30 95% 60%;
+    
+    /* Effects */
+    --shadow-glow: 0 0 20px hsl(280 85% 60% / 0.3);
+    --shadow-colored: 0 8px 32px hsl(280 85% 60% / 0.15);
+    --transition-bouncy: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -104,5 +124,37 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(250 100% 98%), hsl(280 100% 99%));
+  }
+}
+
+@layer utilities {
+  .gradient-rainbow {
+    background: var(--gradient-rainbow);
+  }
+  
+  .gradient-purple-blue {
+    background: var(--gradient-purple-blue);
+  }
+  
+  .gradient-pink-purple {
+    background: var(--gradient-pink-purple);
+  }
+  
+  .text-gradient {
+    background: var(--gradient-rainbow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .rainbow-border {
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: var(--gradient-rainbow);
   }
 }
