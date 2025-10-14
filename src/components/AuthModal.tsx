@@ -39,10 +39,10 @@ export const AuthModal = ({ isOpen, onClose, onSuccess }: AuthModalProps) => {
     setIsLoading(true);
 
     try {
-      // Call edge function to save to Airtable
-      const { data, error } = await supabase.functions.invoke('save-user-info', {
-        body: { email, phone }
-      });
+      // Save to Supabase database
+      const { error } = await supabase
+        .from('user_contacts')
+        .insert([{ email, phone }]);
 
       if (error) throw error;
 
