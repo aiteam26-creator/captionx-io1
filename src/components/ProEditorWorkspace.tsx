@@ -5,6 +5,7 @@ import { CleanTimeline } from "./CleanTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
+import { KeyframeExtractor } from "./KeyframeExtractor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Film } from "lucide-react";
@@ -297,8 +298,14 @@ export const ProEditorWorkspace = () => {
             )}
           </div>
 
-          {/* Bottom: Clean Timeline */}
-          <div className="border-t border-border bg-background p-4 flex-shrink-0">
+          {/* Bottom: Keyframe Extractor & Timeline */}
+          <div className="border-t border-border bg-background p-4 flex-shrink-0 space-y-4">
+            <KeyframeExtractor
+              videoRef={videoRef}
+              videoFile={videoFile}
+              captions={captions}
+            />
+            
             <CleanTimeline
               captions={captions}
               duration={duration}
