@@ -202,8 +202,44 @@ export const EditorWorkspace = () => {
     }
   };
 
+  const downloadAssFile = () => {
+    if (!assContent) {
+      toast({
+        title: "No captions available",
+        description: "Please transcribe a video first to generate captions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const blob = new Blob([assContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'captions.ass';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "ASS file downloaded!",
+      description: "You can use this file with video players or editing software.",
+    });
+  };
+
   const downloadVideoWithCaptions = async () => {
-    if (!videoRef.current || !videoUrl || captions.length === 0) return;
+    if (!videoRef.current || !videoUrl || captions.length === 0) {
+      toast({
+        title: "Cannot download",
+        description: "Please upload and transcribe a video first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // First download the ASS file
+    downloadAssFile();
 
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
@@ -215,21 +251,36 @@ export const EditorWorkspace = () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Capture both video stream and audio stream
+    toast({
+      title: "Processing video...",
+      description: "Rendering captions into your video. This may take a few moments.",
+    });
+
+    // Create a new video element to avoid audio issues with existing one
+    const tempVideo = document.createElement('video');
+    tempVideo.src = videoUrl;
+    tempVideo.crossOrigin = "anonymous";
+    tempVideo.muted = true; // Mute the temp video to avoid double audio
+    
+    await tempVideo.play();
+    tempVideo.pause();
+    tempVideo.currentTime = 0;
+
+    // Capture canvas stream
     const canvasStream = canvas.captureStream(30); // 30 fps
     
-    // Create audio context to capture audio from video
+    // Get original video audio
     const audioContext = new AudioContext();
-    const videoSource = audioContext.createMediaElementSource(video);
-    const audioDestination = audioContext.createMediaStreamDestination();
-    videoSource.connect(audioDestination);
-    videoSource.connect(audioContext.destination); // Also output to speakers
+    const source = audioContext.createMediaElementSource(tempVideo);
+    const dest = audioContext.createMediaStreamDestination();
+    source.connect(dest);
     
-    // Combine video from canvas and audio from video
-    const combinedStream = new MediaStream([
+    // Combine video and audio streams
+    const tracks = [
       ...canvasStream.getVideoTracks(),
-      ...audioDestination.stream.getAudioTracks()
-    ]);
+      ...dest.stream.getAudioTracks()
+    ];
+    const combinedStream = new MediaStream(tracks);
 
     const mediaRecorder = new MediaRecorder(combinedStream, {
       mimeType: 'video/webm;codecs=vp9,opus',
@@ -237,7 +288,11 @@ export const EditorWorkspace = () => {
     });
 
     const chunks: Blob[] = [];
-    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
     
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
@@ -252,36 +307,34 @@ export const EditorWorkspace = () => {
       
       // Cleanup
       audioContext.close();
+      tempVideo.remove();
       
       toast({
         title: "Download complete!",
-        description: "Your video with captions has been downloaded",
+        description: "Your video with burned-in captions and ASS file have been downloaded.",
       });
     };
 
     // Start recording
-    mediaRecorder.start();
-    video.currentTime = 0;
-    video.muted = false;
+    mediaRecorder.start(100); // Collect data every 100ms
 
     const renderFrame = () => {
-      if (!ctx || video.ended || video.paused) {
+      if (tempVideo.ended) {
         mediaRecorder.stop();
         return;
       }
 
       // Draw video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
 
       // Find and draw current captions (5 words at a time)
-      const currentTime = video.currentTime;
+      const currentTime = tempVideo.currentTime;
       const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
       
       if (currentIndex !== -1) {
         const startIndex = Math.max(0, currentIndex - 2);
         const endIndex = Math.min(captions.length, currentIndex + 3);
         const visibleWords = captions.slice(startIndex, endIndex);
-        const currentCaption = captions[currentIndex];
 
         // Setup text styling
         ctx.textAlign = 'center';
@@ -337,13 +390,8 @@ export const EditorWorkspace = () => {
     };
 
     // Start playback and rendering
-    video.play();
+    await tempVideo.play();
     renderFrame();
-
-    toast({
-      title: "Processing video...",
-      description: "Rendering captions into your video. This may take a few moments.",
-    });
   };
 
   const handleWordClick = (index: number, time: number) => {
