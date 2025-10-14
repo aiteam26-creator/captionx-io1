@@ -352,9 +352,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     });
 
     mediaRecorder.start();
-    
-    // Speed up playback for faster export (but keep audio in sync)
-    video.playbackRate = 1.5;
     video.play();
 
     const drawFrame = () => {
@@ -410,7 +407,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         setExportProgress(100);
         mediaRecorder.stop();
         video.pause();
-        video.playbackRate = 1.0;
         audioContext.close();
         setIsExporting(false);
       }
