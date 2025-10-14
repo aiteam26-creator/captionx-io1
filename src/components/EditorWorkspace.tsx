@@ -154,6 +154,7 @@ export const EditorWorkspace = () => {
       toast({
         title: "Extracting audio...",
         description: "Processing your video file",
+        duration: 300000, // 5 minutes - keeps toast visible
       });
 
       const audioBase64 = await extractAudio(file);
@@ -162,6 +163,7 @@ export const EditorWorkspace = () => {
       toast({
         title: "Generating captions...",
         description: "Using AI to transcribe your video",
+        duration: 300000, // 5 minutes - keeps toast visible
       });
 
       console.log('Calling transcribe-video function...');
@@ -189,6 +191,7 @@ export const EditorWorkspace = () => {
       toast({
         title: "Success!",
         description: "Captions generated successfully",
+        duration: 3000,
       });
     } catch (error) {
       console.error('Error transcribing video:', error);
@@ -196,6 +199,7 @@ export const EditorWorkspace = () => {
         title: "Error",
         description: "Failed to generate captions. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setIsProcessing(false);
