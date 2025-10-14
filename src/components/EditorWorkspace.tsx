@@ -29,7 +29,6 @@ export const EditorWorkspace = () => {
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [editedCaption, setEditedCaption] = useState<Caption | null>(null);
-  const [globalFont, setGlobalFont] = useState<string>("Inter");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -252,18 +251,6 @@ export const EditorWorkspace = () => {
     });
   };
 
-  const applyFontToAll = () => {
-    setCaptions(prev => prev.map(caption => ({
-      ...caption,
-      fontFamily: globalFont
-    })));
-
-    toast({
-      title: "Font applied!",
-      description: `All captions now use ${globalFont}`,
-    });
-  };
-
   const selectedCaption = editedCaption;
 
   if (!videoFile) {
@@ -397,41 +384,6 @@ export const EditorWorkspace = () => {
                     </div>
                   );
                 })()}
-              </div>
-            </div>
-          )}
-
-          {/* Global Font Change Section */}
-          {captions.length > 0 && (
-            <div className="bg-gradient-purple-blue p-6 rounded-2xl border-2 border-primary shadow-glow">
-              <h3 className="text-2xl font-bebas tracking-wide text-white mb-4">🎨 Change Font for All Text</h3>
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <Label className="font-bebas text-lg text-white mb-2 block">Select Font</Label>
-                  <select
-                    value={globalFont}
-                    onChange={(e) => setGlobalFont(e.target.value)}
-                    className="w-full p-3 rounded-lg border-2 border-white/50 bg-white text-lg"
-                    style={{ fontFamily: globalFont }}
-                  >
-                    {[
-                      "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
-                      "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
-                      "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
-                      "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
-                      "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
-                      "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
-                    ].map(font => (
-                      <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                    ))}
-                  </select>
-                </div>
-                <Button 
-                  onClick={applyFontToAll}
-                  className="bg-white text-primary hover:bg-white/90 h-[52px] px-8 text-lg font-bebas tracking-wider"
-                >
-                  Apply to All
-                </Button>
               </div>
             </div>
           )}
