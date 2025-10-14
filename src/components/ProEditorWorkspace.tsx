@@ -205,10 +205,7 @@ export const ProEditorWorkspace = () => {
 
   const handleExport = async (format: ExportFormat) => {
     if (format === "video-burned") {
-      toast({
-        title: "Success! 🎉",
-        description: "Your video with burned-in captions is downloading",
-      });
+      await downloadVideoWithCaptions();
     } else if (format === "srt") {
       // Generate basic SRT file
       const srtContent = captions.map((caption, index) => {
@@ -232,11 +229,164 @@ export const ProEditorWorkspace = () => {
         description: "SRT subtitle file downloaded",
       });
     } else if (format === "ass") {
+      downloadAssFile();
+    }
+  };
+
+  const generateAssContent = (): string => {
+    const assHeader = `[Script Info]
+Title: Generated Captions
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1920
+PlayResY: 1080
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,${captions[0]?.fontFamily || 'Inter'},${captions[0]?.fontSize || 32},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+
+    const formatAssTime = (seconds: number): string => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      const centisecs = Math.floor((seconds % 1) * 100);
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centisecs).padStart(2, '0')}`;
+    };
+
+    const events = captions.map((caption) => {
+      const start = formatAssTime(caption.start);
+      const end = formatAssTime(caption.end);
+      return `Dialogue: 0,${start},${end},Default,,0,0,0,,${caption.word}`;
+    }).join('\n');
+
+    return assHeader + events;
+  };
+
+  const downloadAssFile = () => {
+    const assContent = generateAssContent();
+    const blob = new Blob([assContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'captions.ass';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Success! 🎉",
+      description: "Styled ASS subtitle file downloaded",
+    });
+  };
+
+  const downloadVideoWithCaptions = async () => {
+    if (!videoRef.current || !videoFile) return;
+
+    toast({
+      title: "Processing video...",
+      description: "Rendering captions onto video frames",
+      duration: 300000,
+    });
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const stream = canvas.captureStream(30);
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 5000000,
+    });
+
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'video-with-captions.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
       toast({
         title: "Success! 🎉",
-        description: "Styled ASS subtitle file downloaded",
+        description: "Your video with burned-in captions is downloading",
       });
-    }
+    };
+
+    video.currentTime = 0;
+    await new Promise(resolve => {
+      video.onseeked = resolve;
+    });
+
+    mediaRecorder.start();
+    video.play();
+
+    const drawFrame = () => {
+      const currentTime = video.currentTime;
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const activeCaptions = captions.filter(
+        caption => currentTime >= caption.start && currentTime <= caption.end
+      );
+
+      activeCaptions.forEach((caption) => {
+        const fontSize = caption.fontSize || 32;
+        const fontFamily = caption.fontFamily || 'Inter';
+        const color = caption.color || '#ffffff';
+        const bgColor = caption.backgroundColor || 'transparent';
+        
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const x = (caption.positionX || 50) * canvas.width / 100;
+        const y = (caption.positionY || 85) * canvas.height / 100;
+
+        if (bgColor !== 'transparent') {
+          const metrics = ctx.measureText(caption.word);
+          const padding = 10;
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(
+            x - metrics.width / 2 - padding,
+            y - fontSize / 2 - padding,
+            metrics.width + padding * 2,
+            fontSize + padding * 2
+          );
+        }
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(caption.word, x, y);
+        
+        ctx.fillStyle = color;
+        ctx.fillText(caption.word, x, y);
+      });
+
+      if (currentTime < video.duration) {
+        requestAnimationFrame(drawFrame);
+      } else {
+        mediaRecorder.stop();
+        video.pause();
+      }
+    };
+
+    drawFrame();
   };
 
   const formatSRTTime = (seconds: number): string => {
