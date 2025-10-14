@@ -14,27 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      user_contacts: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          phone: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          phone: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          phone?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
