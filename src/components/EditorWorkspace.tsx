@@ -291,11 +291,6 @@ export const EditorWorkspace = () => {
                   return (
                     <div 
                       className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none px-8"
-                      style={{
-                        fontFamily: currentCaption.fontFamily || "Inter",
-                        fontSize: `${currentCaption.fontSize || 32}px`,
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                      }}
                     >
                       <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                         {visibleWords.map((caption, idx) => {
@@ -304,8 +299,11 @@ export const EditorWorkspace = () => {
                             <span
                               key={startIndex + idx}
                               style={{
+                                fontFamily: caption.fontFamily || "Inter",
+                                fontSize: `${caption.fontSize || 32}px`,
                                 color: caption.color || "#ffffff",
                                 fontWeight: caption.isKeyword ? "bold" : "normal",
+                                textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
                                 backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
                                 padding: isCurrentWord ? "4px 12px" : "0",
                                 borderRadius: isCurrentWord ? "8px" : "0",
