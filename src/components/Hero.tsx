@@ -19,8 +19,8 @@ export const Hero = ({ onTryNow }: HeroProps) => {
 
             {/* Main Heading */}
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-tight">
-              World's Most Powerful AIs.{" "}
-              <span className="block mt-2">One Subscription.</span>
+              Turn captions into{" "}
+              <span className="block mt-2">creative typographies</span>
             </h1>
 
             {/* Description */}
