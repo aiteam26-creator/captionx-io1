@@ -290,74 +290,15 @@ export const EditorWorkspace = () => {
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 />
                 
-                {/* Caption overlay - show words at their individual positions during playback */}
+                {/* Caption overlay - Always show captions during playback */}
                 {(() => {
                   const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-                  if (currentIndex === -1 && selectedWordIndex === null) return null;
                   
-                  // Show currently playing word at its position
-                  if (currentIndex !== -1 && selectedWordIndex === null) {
-                    const startIndex = Math.max(0, currentIndex - 2);
-                    const endIndex = Math.min(captions.length, currentIndex + 3);
-                    const visibleWords = captions.slice(startIndex, endIndex);
-                    
-                    return (
-                      <>
-                        {visibleWords.map((caption, idx) => {
-                          const wordIndex = startIndex + idx;
-                          const isCurrentWord = wordIndex === currentIndex;
-                          
-                          // Calculate opacity based on timing for fade effect
-                          let opacity = 0.4;
-                          if (isCurrentWord) {
-                            const wordProgress = (currentTime - caption.start) / (caption.end - caption.start);
-                            if (wordProgress < 0.1) {
-                              opacity = wordProgress * 10; // Fade in
-                            } else if (wordProgress > 0.9) {
-                              opacity = (1 - wordProgress) * 10; // Fade out
-                            } else {
-                              opacity = 1;
-                            }
-                          }
-                          
-                          return (
-                            <div
-                              key={wordIndex}
-                              className="absolute pointer-events-none transition-opacity duration-200"
-                              style={{
-                                left: `${caption.positionX || 50}%`,
-                                top: `${caption.positionY || 80}%`,
-                                transform: 'translate(-50%, -50%)',
-                                opacity,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontFamily: caption.fontFamily || "Inter",
-                                  fontSize: `${caption.fontSize || 32}px`,
-                                  color: caption.color || "#ffffff",
-                                  fontWeight: caption.isKeyword ? "bold" : "normal",
-                                  textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                                  backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
-                                  padding: isCurrentWord ? "4px 12px" : "0",
-                                  borderRadius: isCurrentWord ? "8px" : "0",
-                                  display: "inline-block",
-                                }}
-                              >
-                                {caption.word}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </>
-                    );
-                  }
-
-                  // Show selected word preview box when editing
+                  // When editing a word, show the preview box
                   if (selectedWordIndex !== null && selectedCaption) {
                     return (
                       <div 
-                        className="absolute pointer-events-none"
+                        className="absolute pointer-events-none z-50"
                         style={{
                           left: `${selectedCaption.positionX || 50}%`,
                           top: `${selectedCaption.positionY || 80}%`,
@@ -381,8 +322,64 @@ export const EditorWorkspace = () => {
                       </div>
                     );
                   }
-
-                  return null;
+                  
+                  // During normal playback, show words at their individual positions
+                  if (currentIndex === -1) return null;
+                  
+                  const startIndex = Math.max(0, currentIndex - 2);
+                  const endIndex = Math.min(captions.length, currentIndex + 3);
+                  const visibleWords = captions.slice(startIndex, endIndex);
+                  
+                  return (
+                    <>
+                      {visibleWords.map((caption, idx) => {
+                        const wordIndex = startIndex + idx;
+                        const isCurrentWord = wordIndex === currentIndex;
+                        
+                        // Calculate fade effect
+                        let opacity = isCurrentWord ? 1 : 0.5;
+                        if (isCurrentWord) {
+                          const wordProgress = (currentTime - caption.start) / (caption.end - caption.start);
+                          if (wordProgress < 0.15) {
+                            opacity = 0.3 + (wordProgress / 0.15) * 0.7; // Fade in
+                          } else if (wordProgress > 0.85) {
+                            opacity = 0.3 + ((1 - wordProgress) / 0.15) * 0.7; // Fade out
+                          } else {
+                            opacity = 1;
+                          }
+                        }
+                        
+                        return (
+                          <div
+                            key={wordIndex}
+                            className="absolute pointer-events-none z-40 transition-opacity duration-150"
+                            style={{
+                              left: `${caption.positionX || 50}%`,
+                              top: `${caption.positionY || 80}%`,
+                              transform: 'translate(-50%, -50%)',
+                              opacity,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontFamily: caption.fontFamily || "Inter",
+                                fontSize: `${caption.fontSize || 32}px`,
+                                color: caption.color || "#ffffff",
+                                fontWeight: caption.isKeyword || isCurrentWord ? "bold" : "normal",
+                                textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
+                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.7)" : "transparent",
+                                padding: isCurrentWord ? "6px 14px" : "0",
+                                borderRadius: isCurrentWord ? "10px" : "0",
+                                display: "inline-block",
+                              }}
+                            >
+                              {caption.word}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
                 })()}
               </div>
             </div>
