@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CaptionTimeline } from "./CaptionTimeline";
 import { WordEditor } from "./WordEditor";
 import { VideoPreview } from "./VideoPreview";
+import { VideoUpload } from "./VideoUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Download, Loader2 } from "lucide-react";
+import { Button } from "./ui/button";
+import { Progress } from "./ui/progress";
 
 interface Caption {
   word: string;
@@ -14,25 +20,177 @@ interface Caption {
 }
 
 export const EditorWorkspace = () => {
+  const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
-  const [captions, setCaptions] = useState<Caption[]>([
-    { word: "Welcome", start: 0, end: 0.5, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "to", start: 0.5, end: 0.8, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "our", start: 0.8, end: 1.2, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "caption", start: 1.2, end: 1.8, isKeyword: true, fontSize: 36, fontFamily: "Poppins", color: "#fbbf24" },
-    { word: "editor", start: 1.8, end: 2.4, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "where", start: 2.4, end: 2.8, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "you", start: 2.8, end: 3.0, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "can", start: 3.0, end: 3.3, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "edit", start: 3.3, end: 3.8, isKeyword: true, fontSize: 36, fontFamily: "Poppins", color: "#fbbf24" },
-    { word: "each", start: 3.8, end: 4.2, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "word", start: 4.2, end: 4.6, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-    { word: "individually", start: 4.6, end: 5.4, fontSize: 32, fontFamily: "Inter", color: "#ffffff" },
-  ]);
+  const [captions, setCaptions] = useState<Caption[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [assContent, setAssContent] = useState<string>("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleVideoSelect = async (file: File) => {
+    setVideoFile(file);
+    const url = URL.createObjectURL(file);
+    setVideoUrl(url);
+    
+    // Start transcription
+    await transcribeVideo(file);
+  };
+
+  const extractAudio = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const audioContext = new AudioContext();
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          
+          // Convert to WAV format
+          const offlineContext = new OfflineAudioContext(
+            audioBuffer.numberOfChannels,
+            audioBuffer.length,
+            audioBuffer.sampleRate
+          );
+          
+          const source = offlineContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(offlineContext.destination);
+          source.start();
+          
+          const renderedBuffer = await offlineContext.startRendering();
+          
+          // Convert to base64
+          const wav = audioBufferToWav(renderedBuffer);
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(wav)));
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
+    const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+    const arrayBuffer = new ArrayBuffer(length);
+    const view = new DataView(arrayBuffer);
+    const channels = [];
+    let offset = 0;
+    let pos = 0;
+
+    // Write WAV header
+    const setUint16 = (data: number) => {
+      view.setUint16(pos, data, true);
+      pos += 2;
+    };
+    const setUint32 = (data: number) => {
+      view.setUint32(pos, data, true);
+      pos += 4;
+    };
+
+    setUint32(0x46464952); // "RIFF"
+    setUint32(length - 8);
+    setUint32(0x45564157); // "WAVE"
+    setUint32(0x20746d66); // "fmt "
+    setUint32(16);
+    setUint16(1);
+    setUint16(buffer.numberOfChannels);
+    setUint32(buffer.sampleRate);
+    setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels);
+    setUint16(buffer.numberOfChannels * 2);
+    setUint16(16);
+    setUint32(0x61746164); // "data"
+    setUint32(length - pos - 4);
+
+    // Write interleaved data
+    for (let i = 0; i < buffer.numberOfChannels; i++) {
+      channels.push(buffer.getChannelData(i));
+    }
+
+    while (pos < length) {
+      for (let i = 0; i < buffer.numberOfChannels; i++) {
+        const sample = Math.max(-1, Math.min(1, channels[i][offset]));
+        view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+        pos += 2;
+      }
+      offset++;
+    }
+
+    return arrayBuffer;
+  };
+
+  const transcribeVideo = async (file: File) => {
+    setIsProcessing(true);
+    setProgress(10);
+
+    try {
+      toast({
+        title: "Extracting audio...",
+        description: "Processing your video file",
+      });
+
+      const audioBase64 = await extractAudio(file);
+      setProgress(30);
+
+      toast({
+        title: "Generating captions...",
+        description: "Using AI to transcribe your video",
+      });
+
+      const { data, error } = await supabase.functions.invoke('transcribe-video', {
+        body: { audioBase64 }
+      });
+
+      if (error) throw error;
+
+      setProgress(80);
+      setCaptions(data.captions);
+      setAssContent(data.assContent);
+      setProgress(100);
+
+      toast({
+        title: "Success!",
+        description: "Captions generated successfully",
+      });
+    } catch (error) {
+      console.error('Error transcribing video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate captions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const downloadASS = () => {
+    if (!assContent) return;
+    
+    const blob = new Blob([assContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'captions.ass';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleWordClick = (index: number, time: number) => {
     setCurrentTime(time);
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+    }
   };
 
   const handleWordSelect = (index: number) => {
@@ -51,14 +209,49 @@ export const EditorWorkspace = () => {
 
   const selectedCaption = selectedWordIndex !== null ? captions[selectedWordIndex] : null;
 
+  if (!videoFile) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <VideoUpload onVideoSelect={handleVideoSelect} />
+      </div>
+    );
+  }
+
   return (
     <section className="py-12 px-6">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold mb-8 text-center">AI-Powered Caption Editor</h2>
+        {isProcessing && (
+          <div className="mb-6 bg-card p-6 rounded-lg border border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <h3 className="text-lg font-semibold">Generating Captions...</h3>
+            </div>
+            <Progress value={progress} className="mb-2" />
+            <p className="text-sm text-muted-foreground">{progress}% complete</p>
+          </div>
+        )}
+
+        {captions.length > 0 && (
+          <div className="mb-4 flex justify-end">
+            <Button onClick={downloadASS} variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Download .ASS Captions
+            </Button>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Preview - Left */}
           <div className="lg:col-span-2 space-y-6">
+            {videoUrl && (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                className="w-full rounded-lg border border-border"
+                controls
+                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              />
+            )}
             <VideoPreview 
               captions={captions}
               currentTime={currentTime}
