@@ -268,18 +268,31 @@ export const EditorWorkspace = () => {
           {/* Video Preview - Left */}
           <div className="lg:col-span-2 space-y-6">
             {videoUrl && (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className="w-full rounded-lg border border-border"
-                controls
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-              />
+              <div className="relative w-full">
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  className="w-full rounded-lg border border-border"
+                  controls
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                />
+                {/* Caption overlay on video */}
+                {captions.find(c => currentTime >= c.start && currentTime <= c.end) && (
+                  <div 
+                    className="absolute inset-x-0 bottom-16 pb-8 flex items-center justify-center pointer-events-none"
+                    style={{
+                      fontFamily: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.fontFamily || "Inter",
+                      fontSize: `${captions.find(c => currentTime >= c.start && currentTime <= c.end)?.fontSize || 32}px`,
+                      color: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.color || "#ffffff",
+                      textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                      fontWeight: captions.find(c => currentTime >= c.start && currentTime <= c.end)?.isKeyword ? "bold" : "normal",
+                    }}
+                  >
+                    {captions.find(c => currentTime >= c.start && currentTime <= c.end)?.word}
+                  </div>
+                )}
+              </div>
             )}
-            <VideoPreview 
-              captions={captions}
-              currentTime={currentTime}
-            />
             <CaptionTimeline
               captions={captions}
               currentTime={currentTime}
