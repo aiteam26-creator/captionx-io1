@@ -290,78 +290,100 @@ export const EditorWorkspace = () => {
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 />
                 
-                {/* Caption overlay - show all words when not editing position */}
-                {selectedWordIndex === null && (() => {
+                {/* Caption overlay - show words at their individual positions during playback */}
+                {(() => {
                   const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-                  if (currentIndex === -1) return null;
+                  if (currentIndex === -1 && selectedWordIndex === null) return null;
                   
-                  const startIndex = Math.max(0, currentIndex - 2);
-                  const endIndex = Math.min(captions.length, currentIndex + 3);
-                  const visibleWords = captions.slice(startIndex, endIndex);
-                  const currentCaption = captions[currentIndex];
-                  
-                  return (
-                    <div 
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: `${currentCaption.positionX || 50}%`,
-                        top: `${currentCaption.positionY || 80}%`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    >
-                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                  // Show currently playing word at its position
+                  if (currentIndex !== -1 && selectedWordIndex === null) {
+                    const startIndex = Math.max(0, currentIndex - 2);
+                    const endIndex = Math.min(captions.length, currentIndex + 3);
+                    const visibleWords = captions.slice(startIndex, endIndex);
+                    
+                    return (
+                      <>
                         {visibleWords.map((caption, idx) => {
-                          const isCurrentWord = startIndex + idx === currentIndex;
+                          const wordIndex = startIndex + idx;
+                          const isCurrentWord = wordIndex === currentIndex;
+                          
+                          // Calculate opacity based on timing for fade effect
+                          let opacity = 0.4;
+                          if (isCurrentWord) {
+                            const wordProgress = (currentTime - caption.start) / (caption.end - caption.start);
+                            if (wordProgress < 0.1) {
+                              opacity = wordProgress * 10; // Fade in
+                            } else if (wordProgress > 0.9) {
+                              opacity = (1 - wordProgress) * 10; // Fade out
+                            } else {
+                              opacity = 1;
+                            }
+                          }
+                          
                           return (
-                            <span
-                              key={startIndex + idx}
+                            <div
+                              key={wordIndex}
+                              className="absolute pointer-events-none transition-opacity duration-200"
                               style={{
-                                fontFamily: caption.fontFamily || "Inter",
-                                fontSize: `${caption.fontSize || 32}px`,
-                                color: caption.color || "#ffffff",
-                                fontWeight: caption.isKeyword ? "bold" : "normal",
-                                textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
-                                padding: isCurrentWord ? "4px 12px" : "0",
-                                borderRadius: isCurrentWord ? "8px" : "0",
-                                transition: "all 0.2s ease",
+                                left: `${caption.positionX || 50}%`,
+                                top: `${caption.positionY || 80}%`,
+                                transform: 'translate(-50%, -50%)',
+                                opacity,
                               }}
                             >
-                              {caption.word}
-                            </span>
+                              <span
+                                style={{
+                                  fontFamily: caption.fontFamily || "Inter",
+                                  fontSize: `${caption.fontSize || 32}px`,
+                                  color: caption.color || "#ffffff",
+                                  fontWeight: caption.isKeyword ? "bold" : "normal",
+                                  textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                                  backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
+                                  padding: isCurrentWord ? "4px 12px" : "0",
+                                  borderRadius: isCurrentWord ? "8px" : "0",
+                                  display: "inline-block",
+                                }}
+                              >
+                                {caption.word}
+                              </span>
+                            </div>
                           );
                         })}
-                      </div>
-                    </div>
-                  );
-                })()}
+                      </>
+                    );
+                  }
 
-                {/* Selected word preview - draggable box */}
-                {selectedWordIndex !== null && selectedCaption && (
-                  <div 
-                    className="absolute pointer-events-none"
-                    style={{
-                      left: `${selectedCaption.positionX || 50}%`,
-                      top: `${selectedCaption.positionY || 80}%`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <div 
-                      className="relative border-4 border-dashed border-primary bg-primary/10 backdrop-blur-sm rounded-lg p-3 animate-pulse"
-                      style={{
-                        fontFamily: selectedCaption.fontFamily || "Inter",
-                        fontSize: `${selectedCaption.fontSize || 32}px`,
-                        color: selectedCaption.color || "#ffffff",
-                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                      }}
-                    >
-                      {selectedCaption.word}
-                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded">
-                        Click to position
+                  // Show selected word preview box when editing
+                  if (selectedWordIndex !== null && selectedCaption) {
+                    return (
+                      <div 
+                        className="absolute pointer-events-none"
+                        style={{
+                          left: `${selectedCaption.positionX || 50}%`,
+                          top: `${selectedCaption.positionY || 80}%`,
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                      >
+                        <div 
+                          className="relative border-4 border-dashed border-primary bg-primary/10 backdrop-blur-sm rounded-lg p-3 animate-pulse"
+                          style={{
+                            fontFamily: selectedCaption.fontFamily || "Inter",
+                            fontSize: `${selectedCaption.fontSize || 32}px`,
+                            color: selectedCaption.color || "#ffffff",
+                            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                          }}
+                        >
+                          {selectedCaption.word}
+                          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                            Click anywhere to reposition
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+
+                  return null;
+                })()}
               </div>
             </div>
           )}
