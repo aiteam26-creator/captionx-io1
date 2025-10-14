@@ -8,64 +8,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Vibrant Creative Rainbow Theme */
-    --background: 250 100% 98%;
-    --foreground: 280 90% 15%;
+    /* Premium Minimal Theme - Light Mode */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 280 90% 15%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 280 90% 15%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 280 85% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 200 95% 65%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 250 60% 96%;
-    --muted-foreground: 280 40% 45%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 340 95% 65%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 250 50% 90%;
-    --input: 250 50% 94%;
-    --ring: 280 85% 60%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
     
-    /* Rainbow gradient tokens */
-    --gradient-rainbow: linear-gradient(135deg, 
-      hsl(340 95% 65%), 
-      hsl(280 85% 60%), 
-      hsl(220 90% 65%), 
-      hsl(180 95% 60%), 
-      hsl(140 90% 55%), 
-      hsl(60 95% 55%));
+    /* Premium gradients - subtle accents */
+    --gradient-subtle: linear-gradient(135deg, hsl(0 0% 100%), hsl(240 5% 98%));
+    --gradient-accent: linear-gradient(135deg, hsl(250 100% 98%), hsl(280 100% 99%));
+    --gradient-dark: linear-gradient(135deg, hsl(240 5.9% 10%), hsl(240 4% 16%));
     
-    --gradient-purple-blue: linear-gradient(135deg, hsl(280 85% 60%), hsl(220 90% 65%));
-    --gradient-blue-cyan: linear-gradient(135deg, hsl(220 90% 65%), hsl(180 95% 60%));
-    --gradient-pink-purple: linear-gradient(135deg, hsl(340 95% 65%), hsl(280 85% 60%));
-    --gradient-cyan-green: linear-gradient(135deg, hsl(180 95% 60%), hsl(140 90% 55%));
+    /* Premium effects */
+    --shadow-sm: 0 1px 2px 0 hsl(240 5% 5% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(240 5% 5% / 0.1), 0 2px 4px -2px hsl(240 5% 5% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(240 5% 5% / 0.1), 0 4px 6px -4px hsl(240 5% 5% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(240 5% 5% / 0.1), 0 8px 10px -6px hsl(240 5% 5% / 0.1);
     
-    /* Custom color tokens */
-    --color-rainbow-pink: 340 95% 65%;
-    --color-rainbow-purple: 280 85% 60%;
-    --color-rainbow-blue: 220 90% 65%;
-    --color-rainbow-cyan: 180 95% 60%;
-    --color-rainbow-green: 140 90% 55%;
-    --color-rainbow-yellow: 60 95% 55%;
-    --color-rainbow-orange: 30 95% 60%;
-    
-    /* Effects */
-    --shadow-glow: 0 0 20px hsl(280 85% 60% / 0.3);
-    --shadow-colored: 0 8px 32px hsl(280 85% 60% / 0.15);
-    --transition-bouncy: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -74,46 +59,50 @@ All colors MUST be HSL.
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 240 5.9% 10%;
   }
 
   .dark {
-    --background: 25 20% 8%;
-    --foreground: 35 25% 95%;
+    /* Premium Minimal Theme - Dark Mode */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
-    --card: 25 20% 10%;
-    --card-foreground: 35 25% 95%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 25 20% 10%;
-    --popover-foreground: 35 25% 95%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 30 55% 60%;
-    --primary-foreground: 25 20% 10%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
 
-    --secondary: 25 15% 18%;
-    --secondary-foreground: 35 25% 95%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 25 15% 18%;
-    --muted-foreground: 35 15% 65%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 25 20% 22%;
-    --accent-foreground: 35 25% 95%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 35 25% 95%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 25 15% 18%;
-    --input: 25 15% 18%;
-    --ring: 30 55% 60%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    --gradient-subtle: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 5% 6%));
+    --gradient-accent: linear-gradient(135deg, hsl(240 8% 6%), hsl(240 6% 10%));
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 240 4.9% 83.9%;
   }
 }
 
@@ -124,37 +113,35 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, hsl(250 100% 98%), hsl(280 100% 99%));
+    font-feature-settings: "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
-  .gradient-rainbow {
-    background: var(--gradient-rainbow);
+  .gradient-subtle {
+    background: var(--gradient-subtle);
   }
   
-  .gradient-purple-blue {
-    background: var(--gradient-purple-blue);
+  .gradient-accent {
+    background: var(--gradient-accent);
   }
   
-  .gradient-pink-purple {
-    background: var(--gradient-pink-purple);
+  .text-balance {
+    text-wrap: balance;
   }
   
-  .text-gradient {
-    background: var(--gradient-rainbow);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
   }
   
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
+  .hover-lift:hover {
+    @apply -translate-y-1;
   }
   
-  .rainbow-border {
-    border: 2px solid;
-    border-image-slice: 1;
-    border-image-source: var(--gradient-rainbow);
+  .glass {
+    @apply backdrop-blur-sm bg-background/80 border border-border/50;
   }
 }
