@@ -215,9 +215,24 @@ export const EditorWorkspace = () => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const stream = canvas.captureStream(30); // 30 fps
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
+    // Capture both video stream and audio stream
+    const canvasStream = canvas.captureStream(30); // 30 fps
+    
+    // Create audio context to capture audio from video
+    const audioContext = new AudioContext();
+    const videoSource = audioContext.createMediaElementSource(video);
+    const audioDestination = audioContext.createMediaStreamDestination();
+    videoSource.connect(audioDestination);
+    videoSource.connect(audioContext.destination); // Also output to speakers
+    
+    // Combine video from canvas and audio from video
+    const combinedStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...audioDestination.stream.getAudioTracks()
+    ]);
+
+    const mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: 'video/webm;codecs=vp9,opus',
       videoBitsPerSecond: 5000000
     });
 
@@ -234,6 +249,9 @@ export const EditorWorkspace = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      // Cleanup
+      audioContext.close();
       
       toast({
         title: "Download complete!",
