@@ -290,7 +290,7 @@ export const EditorWorkspace = () => {
                   
                   return (
                     <div 
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none px-8"
+                      className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none px-8"
                       style={{
                         fontFamily: currentCaption.fontFamily || "Inter",
                         fontSize: `${currentCaption.fontSize || 32}px`,
