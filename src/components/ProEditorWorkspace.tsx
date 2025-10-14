@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { VideoUpload } from "./VideoUpload";
 import { VideoEditorCanvas } from "./VideoEditorCanvas";
-import { ProTimeline } from "./ProTimeline";
+import { CleanTimeline } from "./CleanTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
@@ -270,37 +270,42 @@ export const ProEditorWorkspace = () => {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Center: Video canvas */}
-        <div className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
-          {videoUrl && (
-            <VideoEditorCanvas
-              videoUrl={videoUrl}
-              videoRef={videoRef}
-              captions={captions}
-              currentTime={currentTime}
-              selectedWordIndex={selectedWordIndex}
-              onCaptionDrag={handleCaptionDrag}
-              onCaptionClick={handleCaptionClick}
-              onTimeUpdate={setCurrentTime}
-            />
-          )}
+        {/* Left/Center: Video canvas and timeline */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Video canvas */}
+          <div className="flex-1 p-6 overflow-hidden">
+            {videoUrl && (
+              <VideoEditorCanvas
+                videoUrl={videoUrl}
+                videoRef={videoRef}
+                captions={captions}
+                currentTime={currentTime}
+                selectedWordIndex={selectedWordIndex}
+                onCaptionDrag={handleCaptionDrag}
+                onCaptionClick={handleCaptionClick}
+                onTimeUpdate={setCurrentTime}
+              />
+            )}
+          </div>
 
-          {/* Timeline */}
-          <ProTimeline
-            captions={captions}
-            duration={duration}
-            currentTime={currentTime}
-            isPlaying={isPlaying}
-            selectedWordIndex={selectedWordIndex}
-            onSeek={handleSeek}
-            onPlayPause={handlePlayPause}
-            onCaptionClick={handleCaptionClick}
-            onCaptionResize={handleCaptionResize}
-          />
+          {/* Bottom: Clean Timeline */}
+          <div className="border-t border-border bg-background p-4 flex-shrink-0">
+            <CleanTimeline
+              captions={captions}
+              duration={duration}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              selectedWordIndex={selectedWordIndex}
+              onSeek={handleSeek}
+              onPlayPause={handlePlayPause}
+              onCaptionClick={handleCaptionClick}
+              onCaptionResize={handleCaptionResize}
+            />
+          </div>
         </div>
 
         {/* Right sidebar: Properties panel */}
-        <div className="w-80 border-l border-border bg-card flex-shrink-0 overflow-hidden">
+        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-hidden">
           <div className="h-14 border-b border-border flex items-center px-6">
             <h2 className="text-sm font-semibold">Properties</h2>
           </div>
