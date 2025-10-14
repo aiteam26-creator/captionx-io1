@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 interface Caption {
   word: string;
@@ -265,36 +267,15 @@ export const EditorWorkspace = () => {
           </div>
         )}
 
-        {captions.length > 0 && (
-          <div className="mb-6 flex justify-end animate-slide-up">
-            <Button 
-              onClick={downloadASS} 
-              className="gradient-purple-blue text-white hover:scale-105 transition-all shadow-glow font-bebas tracking-wider"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download .ASS Captions
-            </Button>
-          </div>
-        )}
         
-        {/* Word Editor - Top */}
-        {captions.length > 0 && (
-          <div className="mb-6 animate-bounce-in">
-            <WordEditor
-              caption={selectedCaption}
-              onUpdate={handleWordUpdate}
-            />
-          </div>
-        )}
-
-        {/* Video Preview and Timeline - Below */}
+        {/* Video Preview and Controls */}
         <div className="space-y-6 animate-slide-up">
           {videoUrl && (
             <div className="relative w-full bg-white/60 backdrop-blur-sm p-4 rounded-2xl border-2 border-primary shadow-glow">
               <video
                 ref={videoRef}
                 src={videoUrl}
-                className="w-full rounded-lg border border-border"
+                className="w-full rounded-lg"
                 controls
                 onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
               />
@@ -303,11 +284,9 @@ export const EditorWorkspace = () => {
                 const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
                 if (currentIndex === -1) return null;
                 
-                // Get 2 words before and 2 words after the current word (total 5 words)
                 const startIndex = Math.max(0, currentIndex - 2);
                 const endIndex = Math.min(captions.length, currentIndex + 3);
                 const visibleWords = captions.slice(startIndex, endIndex);
-                
                 const currentCaption = captions[currentIndex];
                 
                 return (
@@ -347,6 +326,108 @@ export const EditorWorkspace = () => {
               })()}
             </div>
           )}
+
+          {/* Individual Editing Controls Below Video */}
+          {captions.length > 0 && selectedCaption && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Text Edit */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label htmlFor="word-text" className="font-bebas text-lg text-primary mb-2 block">Text ✏️</Label>
+                <Input
+                  id="word-text"
+                  value={selectedCaption.word}
+                  onChange={(e) => handleWordUpdate({ word: e.target.value })}
+                  className="border-primary/50"
+                />
+              </div>
+
+              {/* Font Selector */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Font 🎨</Label>
+                <select
+                  value={selectedCaption.fontFamily || "Inter"}
+                  onChange={(e) => handleWordUpdate({ fontFamily: e.target.value })}
+                  className="w-full p-2 rounded-lg border border-primary/50 bg-white"
+                  style={{ fontFamily: selectedCaption.fontFamily || "Inter" }}
+                >
+                  {["Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", "Righteous", "Audiowide", "Black Ops One", "Fredoka One"].map(font => (
+                    <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Font Size */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Size 📏 {selectedCaption.fontSize || 32}px</Label>
+                <input
+                  type="range"
+                  min="16"
+                  max="72"
+                  value={selectedCaption.fontSize || 32}
+                  onChange={(e) => handleWordUpdate({ fontSize: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Color */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Color 🎨</Label>
+                <Input
+                  type="color"
+                  value={selectedCaption.color || "#ffffff"}
+                  onChange={(e) => handleWordUpdate({ color: e.target.value })}
+                  className="h-12 cursor-pointer"
+                />
+              </div>
+
+              {/* Position X */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label className="font-bebas text-lg text-primary mb-2 block">X Position ↔️ {selectedCaption.positionX || 50}%</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={selectedCaption.positionX || 50}
+                  onChange={(e) => handleWordUpdate({ positionX: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Position Y */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Y Position ↕️ {selectedCaption.positionY || 80}%</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={selectedCaption.positionY || 80}
+                  onChange={(e) => handleWordUpdate({ positionY: parseInt(e.target.value) })}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Download Button */}
+              <div className="md:col-span-2 bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                <Button 
+                  onClick={downloadASS} 
+                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Download .ASS Captions
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {captions.length > 0 && !selectedCaption && (
+            <div className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl border-2 border-dashed border-primary/50 text-center">
+              <p className="text-muted-foreground font-poppins text-lg">
+                ✨ Click the pencil icon on any word below to start editing
+              </p>
+            </div>
+          )}
+
+          {/* Caption Timeline */}
           <CaptionTimeline
             captions={captions}
             currentTime={currentTime}
