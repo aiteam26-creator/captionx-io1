@@ -25,7 +25,7 @@ export const Hero = ({ onTryNow }: HeroProps) => {
 
             {/* Description */}
             <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-              Stop juggling tabs and subscriptions - CaptionAI gives you access to all best-in-class AI models for just $12/month. That's almost half of what you'd pay for a single premium AI chat subscription.
+              Edit each word individually with precision. Choose fonts, adjust sizes, and position captions exactly where you want them.
             </p>
 
             {/* CTA Button */}
