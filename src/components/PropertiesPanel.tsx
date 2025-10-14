@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { Type, Palette, Move, Paintbrush } from "lucide-react";
+import { Type, Palette, ChevronDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Caption {
   word: string;
@@ -36,13 +35,15 @@ const COLOR_SWATCHES = [
 ];
 
 export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => {
+  const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
+
   if (!caption) {
     return (
       <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center space-y-2">
-          <Type className="w-12 h-12 mx-auto text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">
-            Select a caption to edit its properties
+        <div className="text-center space-y-3 opacity-60">
+          <Type className="w-10 h-10 mx-auto text-muted-foreground" strokeWidth={1.5} />
+          <p className="text-sm text-muted-foreground font-medium">
+            Select a caption to edit
           </p>
         </div>
       </div>
@@ -50,199 +51,260 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
   }
 
   return (
-    <div className="h-full overflow-y-auto space-y-6 p-6">
-      {/* Text Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
-          <Type className="w-4 h-4 text-primary" />
-          <span>Typography</span>
-        </div>
+    <div className="h-full overflow-y-auto">
+      <div className="p-5 space-y-5">
         
+        {/* Typography Section */}
         <div className="space-y-3">
-          <div>
-            <Label htmlFor="text" className="text-xs font-medium text-muted-foreground mb-2 block">Content</Label>
+          <div className="flex items-center gap-2 mb-3">
+            <Type className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Typography</span>
+          </div>
+          
+          {/* Caption Text */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Text</Label>
             <Input
-              id="text"
               value={caption.word}
               onChange={(e) => onUpdate({ word: e.target.value })}
-              className="h-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              className="h-9 text-sm border-border/60 focus:border-foreground transition-colors bg-background hover:bg-accent/30"
+              placeholder="Enter caption text"
             />
           </div>
 
-          <div>
-            <Label htmlFor="font" className="text-xs font-medium text-muted-foreground mb-2 block">Font Family</Label>
-            <Select value={caption.fontFamily || "Inter"} onValueChange={(v) => onUpdate({ fontFamily: v })}>
-              <SelectTrigger id="font" className="h-10 transition-all duration-200 hover:border-primary/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {FONTS.map((font) => (
-                  <SelectItem 
-                    key={font} 
-                    value={font} 
-                    style={{ fontFamily: font }}
-                    className="cursor-pointer transition-colors"
-                  >
-                    {font}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Font Selector with Live Preview */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Font</Label>
+            <div className="relative">
+              <button
+                onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
+                className="w-full h-9 px-3 flex items-center justify-between text-sm border border-border/60 rounded-md bg-background hover:bg-accent/30 hover:border-foreground transition-all"
+              >
+                <span style={{ fontFamily: caption.fontFamily || "Inter" }} className="truncate">
+                  {caption.fontFamily || "Inter"}
+                </span>
+                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", fontDropdownOpen && "rotate-180")} />
+              </button>
+              
+              {fontDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setFontDropdownOpen(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto animate-slide-up">
+                    {FONTS.map((font) => (
+                      <button
+                        key={font}
+                        onClick={() => {
+                          onUpdate({ fontFamily: font });
+                          setFontDropdownOpen(false);
+                        }}
+                        className={cn(
+                          "w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between group",
+                          caption.fontFamily === font && "bg-accent/50"
+                        )}
+                        style={{ fontFamily: font }}
+                      >
+                        <span className="truncate">{font}</span>
+                        {caption.fontFamily === font && (
+                          <Check className="w-3.5 h-3.5 text-foreground" strokeWidth={2.5} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="size" className="text-xs font-medium text-muted-foreground mb-2 block">
-              Size: {caption.fontSize || 32}px
-            </Label>
+          {/* Font Size Slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Size</Label>
+              <span className="text-xs font-mono text-foreground bg-accent/50 px-2 py-0.5 rounded">
+                {caption.fontSize || 32}px
+              </span>
+            </div>
             <Slider
-              id="size"
               min={12}
               max={144}
               step={1}
               value={[caption.fontSize || 32]}
               onValueChange={(value) => onUpdate({ fontSize: value[0] })}
-              className="py-4"
+              className="py-3"
             />
           </div>
         </div>
-      </div>
 
-      <Separator className="my-6" />
+        {/* Divider */}
+        <div className="h-px bg-border/50" />
 
-      {/* Color Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
-          <Palette className="w-4 h-4 text-primary" />
-          <span>Colors</span>
-        </div>
+        {/* Colors Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-3">
+            <Palette className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Colors</span>
+          </div>
 
-        <div className="space-y-4">
           {/* Text Color */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-2 block">Text Color</Label>
-            <div className="space-y-3">
-              {/* Color Swatches */}
-              <div className="flex flex-wrap gap-2">
-                {COLOR_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch}
-                    onClick={() => onUpdate({ color: swatch })}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
-                      caption.color?.toUpperCase() === swatch ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                    }`}
-                    style={{ backgroundColor: swatch }}
-                    title={swatch}
-                  />
-                ))}
-              </div>
-              
-              {/* Custom Color Picker */}
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={caption.color || "#ffffff"}
-                  onChange={(e) => onUpdate({ color: e.target.value })}
-                  className="h-10 w-16 cursor-pointer"
-                />
-                <Input
-                  value={caption.color || "#ffffff"}
-                  onChange={(e) => onUpdate({ color: e.target.value })}
-                  className="h-10 flex-1 font-mono text-xs transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                  placeholder="#ffffff"
-                />
-              </div>
+          <div className="space-y-2">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Text Color</Label>
+            
+            {/* Color Swatches */}
+            <div className="flex flex-wrap gap-1.5">
+              {COLOR_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  onClick={() => onUpdate({ color: swatch })}
+                  className={cn(
+                    "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative group",
+                    caption.color?.toUpperCase() === swatch 
+                      ? "border-foreground shadow-md scale-105" 
+                      : "border-border/40 hover:border-foreground/40"
+                  )}
+                  style={{ backgroundColor: swatch }}
+                  title={swatch}
+                >
+                  {caption.color?.toUpperCase() === swatch && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            {/* Hex Input */}
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={caption.color || "#ffffff"}
+                onChange={(e) => onUpdate({ color: e.target.value })}
+                className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
+              />
+              <Input
+                value={caption.color || "#ffffff"}
+                onChange={(e) => onUpdate({ color: e.target.value })}
+                className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
+                placeholder="#ffffff"
+              />
             </div>
           </div>
 
           {/* Background Color */}
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-2 block">Background</Label>
-            <div className="space-y-3">
-              {/* Background Swatches */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onUpdate({ backgroundColor: "transparent" })}
-                  className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
-                    !caption.backgroundColor || caption.backgroundColor === "transparent" ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                  }`}
-                  style={{ 
-                    background: 'linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)',
-                    backgroundSize: '8px 8px',
-                    backgroundPosition: '0 0, 4px 4px'
-                  }}
-                  title="Transparent"
-                />
-                {COLOR_SWATCHES.slice(0, 5).map((swatch) => (
-                  <button
-                    key={swatch}
-                    onClick={() => onUpdate({ backgroundColor: swatch + "CC" })}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 ${
-                      caption.backgroundColor?.slice(0, 7).toUpperCase() === swatch ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
-                    }`}
-                    style={{ backgroundColor: swatch + "CC" }}
-                    title={swatch}
-                  />
-                ))}
-              </div>
+          <div className="space-y-2">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Background</Label>
+            
+            {/* Background Swatches */}
+            <div className="flex flex-wrap gap-1.5">
+              {/* Transparent Option */}
+              <button
+                onClick={() => onUpdate({ backgroundColor: "transparent" })}
+                className={cn(
+                  "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative",
+                  !caption.backgroundColor || caption.backgroundColor === "transparent"
+                    ? "border-foreground shadow-md scale-105"
+                    : "border-border/40 hover:border-foreground/40"
+                )}
+                style={{ 
+                  background: 'repeating-conic-gradient(hsl(var(--muted)) 0% 25%, transparent 0% 50%) 50% / 8px 8px'
+                }}
+                title="Transparent"
+              >
+                {(!caption.backgroundColor || caption.backgroundColor === "transparent") && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-foreground drop-shadow-md" strokeWidth={3} />
+                  </div>
+                )}
+              </button>
               
-              {/* Custom Background Color */}
-              <div className="flex gap-2">
-                <Input
-                  type="color"
-                  value={caption.backgroundColor?.slice(0, 7) || "#000000"}
-                  onChange={(e) => onUpdate({ backgroundColor: e.target.value + "CC" })}
-                  className="h-10 w-16 cursor-pointer"
-                />
-                <Input
-                  value={caption.backgroundColor || "transparent"}
-                  onChange={(e) => onUpdate({ backgroundColor: e.target.value })}
-                  className="h-10 flex-1 font-mono text-xs transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-                  placeholder="transparent"
-                />
-              </div>
+              {COLOR_SWATCHES.slice(0, 6).map((swatch) => (
+                <button
+                  key={swatch}
+                  onClick={() => onUpdate({ backgroundColor: swatch + "E6" })}
+                  className={cn(
+                    "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative",
+                    caption.backgroundColor?.slice(0, 7).toUpperCase() === swatch
+                      ? "border-foreground shadow-md scale-105"
+                      : "border-border/40 hover:border-foreground/40"
+                  )}
+                  style={{ backgroundColor: swatch + "E6" }}
+                  title={swatch}
+                >
+                  {caption.backgroundColor?.slice(0, 7).toUpperCase() === swatch && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            {/* Hex Input */}
+            <div className="flex gap-2 items-center">
+              <Input
+                type="color"
+                value={caption.backgroundColor?.slice(0, 7) || "#000000"}
+                onChange={(e) => onUpdate({ backgroundColor: e.target.value + "E6" })}
+                className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
+              />
+              <Input
+                value={caption.backgroundColor || "transparent"}
+                onChange={(e) => onUpdate({ backgroundColor: e.target.value })}
+                className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
+                placeholder="transparent"
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      <Separator className="my-6" />
+        {/* Divider */}
+        <div className="h-px bg-border/50" />
 
-      {/* Position Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
-          <Move className="w-4 h-4 text-primary" />
-          <span>Position</span>
-        </div>
+        {/* Position Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} fill="none" viewBox="0 0 24 24">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5" />
+            </svg>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Position</span>
+          </div>
 
-        <div className="space-y-4">
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-2 block">
-              Horizontal: {caption.positionX || 50}%
-            </Label>
+          {/* Horizontal Position */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Horizontal</Label>
+              <span className="text-xs font-mono text-foreground bg-accent/50 px-2 py-0.5 rounded">
+                {caption.positionX || 50}%
+              </span>
+            </div>
             <Slider
               min={0}
               max={100}
               step={1}
               value={[caption.positionX || 50]}
               onValueChange={(value) => onUpdate({ positionX: value[0] })}
-              className="py-4"
+              className="py-3"
             />
           </div>
 
-          <div>
-            <Label className="text-xs font-medium text-muted-foreground mb-2 block">
-              Vertical: {caption.positionY || 80}%
-            </Label>
+          {/* Vertical Position */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Vertical</Label>
+              <span className="text-xs font-mono text-foreground bg-accent/50 px-2 py-0.5 rounded">
+                {caption.positionY || 80}%
+              </span>
+            </div>
             <Slider
               min={0}
               max={100}
               step={1}
               value={[caption.positionY || 80]}
               onValueChange={(value) => onUpdate({ positionY: value[0] })}
-              className="py-4"
+              className="py-3"
             />
           </div>
         </div>
+
       </div>
     </div>
   );
