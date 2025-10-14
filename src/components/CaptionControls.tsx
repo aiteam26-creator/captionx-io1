@@ -13,6 +13,7 @@ interface CaptionControlsProps {
   onFontFamilyChange: (font: string) => void;
   onColorChange: (color: string) => void;
   onPositionChange: (pos: { x: number; y: number }) => void;
+  onApplyToAll?: (updates: { fontSize?: number; color?: string; fontFamily?: string }) => void;
 }
 
 const FONTS = [
@@ -29,8 +30,11 @@ export const CaptionControls = ({
   onFontFamilyChange,
   onColorChange,
   onPositionChange,
+  onApplyToAll,
 }: CaptionControlsProps) => {
   const [showFonts, setShowFonts] = useState(false);
+  const [globalColor, setGlobalColor] = useState("#ffffff");
+  const [globalSize, setGlobalSize] = useState(32);
 
   const movePosition = (direction: 'up' | 'down' | 'left' | 'right') => {
     const step = 5;
@@ -135,6 +139,62 @@ export const CaptionControls = ({
           />
         </div>
       </div>
+
+      {/* Global Controls */}
+      {onApplyToAll && (
+        <div className="pt-4 border-t space-y-4">
+          <h4 className="font-semibold text-sm text-muted-foreground">Apply to All Text</h4>
+          
+          {/* Global Color */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Global Color</Label>
+            <div className="flex gap-2">
+              <Input
+                type="color"
+                value={globalColor}
+                onChange={(e) => setGlobalColor(e.target.value)}
+                className="h-12 w-20 cursor-pointer rounded-xl"
+              />
+              <Input
+                type="text"
+                value={globalColor}
+                onChange={(e) => setGlobalColor(e.target.value)}
+                className="flex-1 rounded-xl"
+                placeholder="#ffffff"
+              />
+            </div>
+            <Button
+              onClick={() => onApplyToAll({ color: globalColor })}
+              variant="outline"
+              size="sm"
+              className="w-full rounded-xl"
+            >
+              Apply Color to All
+            </Button>
+          </div>
+
+          {/* Global Size */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Global Size: {globalSize}px</Label>
+            <input
+              type="range"
+              min="16"
+              max="72"
+              value={globalSize}
+              onChange={(e) => setGlobalSize(parseInt(e.target.value))}
+              className="w-full accent-primary"
+            />
+            <Button
+              onClick={() => onApplyToAll({ fontSize: globalSize })}
+              variant="outline"
+              size="sm"
+              className="w-full rounded-xl"
+            >
+              Apply Size to All
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
