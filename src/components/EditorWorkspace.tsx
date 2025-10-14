@@ -290,11 +290,11 @@ export const EditorWorkspace = () => {
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                 />
                 
-                {/* Caption overlay - Always show captions during playback */}
+                {/* Caption overlay */}
                 {(() => {
                   const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
                   
-                  // When editing a word, show the preview box
+                  // When editing a word, show the preview box at custom position
                   if (selectedWordIndex !== null && selectedCaption) {
                     return (
                       <div 
@@ -323,62 +323,49 @@ export const EditorWorkspace = () => {
                     );
                   }
                   
-                  // During normal playback, show words at their individual positions
+                  // During normal playback, show 5 words together at bottom center
                   if (currentIndex === -1) return null;
                   
                   const startIndex = Math.max(0, currentIndex - 2);
                   const endIndex = Math.min(captions.length, currentIndex + 3);
                   const visibleWords = captions.slice(startIndex, endIndex);
+                  const currentCaption = captions[currentIndex];
                   
                   return (
-                    <>
-                      {visibleWords.map((caption, idx) => {
-                        const wordIndex = startIndex + idx;
-                        const isCurrentWord = wordIndex === currentIndex;
-                        
-                        // Calculate fade effect
-                        let opacity = isCurrentWord ? 1 : 0.5;
-                        if (isCurrentWord) {
-                          const wordProgress = (currentTime - caption.start) / (caption.end - caption.start);
-                          if (wordProgress < 0.15) {
-                            opacity = 0.3 + (wordProgress / 0.15) * 0.7; // Fade in
-                          } else if (wordProgress > 0.85) {
-                            opacity = 0.3 + ((1 - wordProgress) / 0.15) * 0.7; // Fade out
-                          } else {
-                            opacity = 1;
-                          }
-                        }
-                        
-                        return (
-                          <div
-                            key={wordIndex}
-                            className="absolute pointer-events-none z-40 transition-opacity duration-150"
-                            style={{
-                              left: `${caption.positionX || 50}%`,
-                              top: `${caption.positionY || 80}%`,
-                              transform: 'translate(-50%, -50%)',
-                              opacity,
-                            }}
-                          >
+                    <div 
+                      className="absolute bottom-20 left-1/2 transform -translate-x-1/2 pointer-events-none z-40"
+                      style={{
+                        fontFamily: currentCaption.fontFamily || "Inter",
+                        fontSize: `${currentCaption.fontSize || 32}px`,
+                      }}
+                    >
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap px-4">
+                        {visibleWords.map((caption, idx) => {
+                          const wordIndex = startIndex + idx;
+                          const isCurrentWord = wordIndex === currentIndex;
+                          
+                          return (
                             <span
+                              key={wordIndex}
+                              className="transition-all duration-200"
                               style={{
                                 fontFamily: caption.fontFamily || "Inter",
                                 fontSize: `${caption.fontSize || 32}px`,
                                 color: caption.color || "#ffffff",
-                                fontWeight: caption.isKeyword || isCurrentWord ? "bold" : "normal",
+                                fontWeight: isCurrentWord ? "bold" : "normal",
                                 textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
-                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.7)" : "transparent",
-                                padding: isCurrentWord ? "6px 14px" : "0",
+                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
+                                padding: isCurrentWord ? "6px 14px" : "2px 4px",
                                 borderRadius: isCurrentWord ? "10px" : "0",
                                 display: "inline-block",
                               }}
                             >
                               {caption.word}
                             </span>
-                          </div>
-                        );
-                      })}
-                    </>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })()}
               </div>
