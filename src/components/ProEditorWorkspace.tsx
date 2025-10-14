@@ -1,0 +1,271 @@
+import { useState, useRef } from "react";
+import { VideoUpload } from "./VideoUpload";
+import { VideoEditorCanvas } from "./VideoEditorCanvas";
+import { ProTimeline } from "./ProTimeline";
+import { PropertiesPanel } from "./PropertiesPanel";
+import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Download, Film } from "lucide-react";
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
+
+interface Caption {
+  word: string;
+  start: number;
+  end: number;
+  isKeyword?: boolean;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
+  positionX?: number;
+  positionY?: number;
+}
+
+export const ProEditorWorkspace = () => {
+  const { toast } = useToast();
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
+  const [captions, setCaptions] = useState<Caption[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleVideoSelect = async (file: File) => {
+    setVideoFile(file);
+    const url = URL.createObjectURL(file);
+    setVideoUrl(url);
+    await transcribeVideo(file);
+  };
+
+  const extractAudio = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      
+      video.onloadedmetadata = () => {
+        const canvas = document.createElement('canvas');
+        const context = new AudioContext();
+        const source = context.createMediaElementSource(video);
+        const dest = context.createMediaStreamDestination();
+        
+        source.connect(dest);
+        
+        const mediaRecorder = new MediaRecorder(dest.stream);
+        const chunks: Blob[] = [];
+        
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+        };
+        
+        video.play();
+        mediaRecorder.start();
+        
+        setTimeout(() => {
+          video.pause();
+          mediaRecorder.stop();
+          source.disconnect();
+        }, Math.min(video.duration * 1000, 60000));
+      };
+      
+      video.onerror = reject;
+    });
+  };
+
+  const transcribeVideo = async (file: File) => {
+    setIsProcessing(true);
+    setProgress(10);
+
+    try {
+      toast({
+        title: "Extracting audio...",
+        description: "Processing your video file",
+      });
+
+      const audioBase64 = await extractAudio(file);
+      setProgress(30);
+
+      toast({
+        title: "Generating captions...",
+        description: "Using AI to transcribe your video",
+        duration: 300000,
+      });
+
+      const { data, error } = await supabase.functions.invoke('transcribe-video', {
+        body: { audioBase64 }
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.captions) {
+        throw new Error('No captions received from transcription');
+      }
+
+      setProgress(80);
+      setCaptions(data.captions);
+      setProgress(100);
+
+      toast({
+        title: "Captions generated!",
+        description: `${data.captions.length} words transcribed successfully`,
+      });
+
+      setIsProcessing(false);
+      setProgress(0);
+    } catch (error: any) {
+      console.error('Transcription error:', error);
+      toast({
+        title: "Transcription failed",
+        description: error.message || "An error occurred during transcription",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      setProgress(0);
+    }
+  };
+
+  const handleCaptionDrag = (index: number, x: number, y: number) => {
+    setCaptions(prev => prev.map((caption, i) => 
+      i === index ? { ...caption, positionX: x, positionY: y } : caption
+    ));
+  };
+
+  const handleCaptionClick = (index: number) => {
+    setSelectedWordIndex(index);
+    if (videoRef.current && !isPlaying) {
+      videoRef.current.currentTime = captions[index].start;
+    }
+  };
+
+  const handleCaptionUpdate = (updates: Partial<Caption>) => {
+    if (selectedWordIndex === null) return;
+    
+    setCaptions(prev => prev.map((caption, i) => 
+      i === selectedWordIndex ? { ...caption, ...updates } : caption
+    ));
+  };
+
+  const handleCaptionResize = (index: number, newStart: number, newEnd: number) => {
+    setCaptions(prev => prev.map((caption, i) => 
+      i === index ? { ...caption, start: newStart, end: newEnd } : caption
+    ));
+  };
+
+  const handlePlayPause = () => {
+    if (!videoRef.current) return;
+    
+    if (isPlaying) {
+      videoRef.current.pause();
+    } else {
+      videoRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (time: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = time;
+    setCurrentTime(time);
+  };
+
+  const downloadVideoWithCaptions = async () => {
+    // Placeholder for download functionality
+    toast({
+      title: "Download",
+      description: "Video export functionality coming soon",
+    });
+  };
+
+  if (!videoFile) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="max-w-2xl w-full px-6">
+          <VideoUpload onVideoSelect={handleVideoSelect} />
+        </div>
+      </div>
+    );
+  }
+
+  if (isProcessing) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <CaptionGenerationLoader progress={progress} />
+      </div>
+    );
+  }
+
+  const duration = videoRef.current?.duration || 0;
+  const selectedCaption = selectedWordIndex !== null ? captions[selectedWordIndex] : null;
+
+  return (
+    <div className="h-screen flex flex-col bg-background">
+      {/* Top toolbar */}
+      <div className="h-14 border-b border-border flex items-center justify-between px-6 bg-card">
+        <div className="flex items-center gap-3">
+          <Film className="w-5 h-5" />
+          <h1 className="text-lg font-semibold">Caption Editor</h1>
+          <Separator orientation="vertical" className="h-6" />
+          <span className="text-sm text-muted-foreground">{videoFile.name}</span>
+        </div>
+
+        <Button onClick={downloadVideoWithCaptions} size="sm">
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Center: Video canvas */}
+        <div className="flex-1 flex flex-col p-6 gap-4 overflow-hidden">
+          {videoUrl && (
+            <VideoEditorCanvas
+              videoUrl={videoUrl}
+              videoRef={videoRef}
+              captions={captions}
+              currentTime={currentTime}
+              selectedWordIndex={selectedWordIndex}
+              onCaptionDrag={handleCaptionDrag}
+              onCaptionClick={handleCaptionClick}
+              onTimeUpdate={setCurrentTime}
+            />
+          )}
+
+          {/* Timeline */}
+          <ProTimeline
+            captions={captions}
+            duration={duration}
+            currentTime={currentTime}
+            isPlaying={isPlaying}
+            selectedWordIndex={selectedWordIndex}
+            onSeek={handleSeek}
+            onPlayPause={handlePlayPause}
+            onCaptionClick={handleCaptionClick}
+            onCaptionResize={handleCaptionResize}
+          />
+        </div>
+
+        {/* Right sidebar: Properties panel */}
+        <div className="w-80 border-l border-border bg-card flex-shrink-0 overflow-hidden">
+          <div className="h-14 border-b border-border flex items-center px-6">
+            <h2 className="text-sm font-semibold">Properties</h2>
+          </div>
+          <PropertiesPanel
+            caption={selectedCaption}
+            onUpdate={handleCaptionUpdate}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};

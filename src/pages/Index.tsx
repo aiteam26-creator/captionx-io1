@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Hero } from "@/components/Hero";
-import { EditorWorkspace } from "@/components/EditorWorkspace";
+import { ProEditorWorkspace } from "@/components/ProEditorWorkspace";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -20,7 +20,7 @@ const Index = () => {
       
       {showEditor && (
         <div id="editor">
-          <EditorWorkspace />
+          <ProEditorWorkspace />
         </div>
       )}
       
