@@ -412,7 +412,6 @@ export const EditorWorkspace = () => {
                     value={globalFont}
                     onChange={(e) => setGlobalFont(e.target.value)}
                     className="w-full p-3 rounded-lg border-2 border-white/50 bg-white text-lg"
-                    style={{ fontFamily: globalFont }}
                   >
                     {[
                       "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
@@ -457,7 +456,6 @@ export const EditorWorkspace = () => {
                   value={selectedCaption.fontFamily || "Inter"}
                   onChange={(e) => handleWordUpdate({ fontFamily: e.target.value })}
                   className="w-full p-2 rounded-lg border border-primary/50 bg-white"
-                  style={{ fontFamily: selectedCaption.fontFamily || "Inter" }}
                 >
                   {[
                     "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
