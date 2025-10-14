@@ -17,6 +17,8 @@ interface Caption {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
+  positionX?: number;
+  positionY?: number;
 }
 
 export const EditorWorkspace = () => {
@@ -297,7 +299,12 @@ export const EditorWorkspace = () => {
                 
                 return (
                   <div 
-                    className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none px-8"
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${currentCaption.positionX || 50}%`,
+                      top: `${currentCaption.positionY || 80}%`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
                   >
                     <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                       {visibleWords.map((caption, idx) => {

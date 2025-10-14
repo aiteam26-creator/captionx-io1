@@ -12,6 +12,8 @@ interface Caption {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
+  positionX?: number;
+  positionY?: number;
 }
 
 interface WordEditorProps {
@@ -21,6 +23,7 @@ interface WordEditorProps {
 
 const FONTS = [
   "Inter",
+  "Bebas Neue",
   "Roboto",
   "Playfair Display",
   "Montserrat",
@@ -35,11 +38,25 @@ const FONTS = [
   "Ubuntu",
   "PT Sans",
   "Lora",
-  "Bebas Neue",
   "Crimson Text",
   "Archivo",
   "Cabin",
   "Quicksand",
+  "Barlow",
+  "Barlow Condensed",
+  "Barlow Semi Condensed",
+  "Dr Sugiyama",
+  "Futura",
+  "Gill Sans",
+  "High Tide",
+  "Righteous",
+  "Bungee",
+  "Bungee Shade",
+  "Permanent Marker",
+  "Bangers",
+  "Black Ops One",
+  "Fredoka One",
+  "Audiowide",
 ];
 
 export const WordEditor = ({ caption, onUpdate }: WordEditorProps) => {
@@ -122,6 +139,32 @@ export const WordEditor = ({ caption, onUpdate }: WordEditorProps) => {
           value={caption.color || "#ffffff"}
           onChange={(e) => onUpdate({ color: e.target.value })}
           className="h-12"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="position-x">Position X: {caption.positionX || 50}%</Label>
+        <input
+          id="position-x"
+          type="range"
+          min="0"
+          max="100"
+          value={caption.positionX || 50}
+          onChange={(e) => onUpdate({ positionX: parseInt(e.target.value) })}
+          className="w-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="position-y">Position Y: {caption.positionY || 80}%</Label>
+        <input
+          id="position-y"
+          type="range"
+          min="0"
+          max="100"
+          value={caption.positionY || 80}
+          onChange={(e) => onUpdate({ positionY: parseInt(e.target.value) })}
+          className="w-full"
         />
       </div>
     </div>
