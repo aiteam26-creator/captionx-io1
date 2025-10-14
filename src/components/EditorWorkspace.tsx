@@ -190,7 +190,7 @@ export const EditorWorkspace = () => {
 
       toast({
         title: "Success!",
-        description: "Captions generated successfully",
+        description: "Captions generated successfully. Ready to download!",
         duration: 3000,
       });
     } catch (error) {
@@ -201,7 +201,6 @@ export const EditorWorkspace = () => {
         variant: "destructive",
         duration: 5000,
       });
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -298,7 +297,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       return;
     }
 
-    // Prepare to render captions into the video
+    // Start download process
+    setProgress(0);
+    toast({
+      title: "Preparing download...",
+      description: "Rendering captions into your video. This may take a few moments.",
+      duration: 300000,
+    });
 
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
@@ -310,10 +315,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    toast({
-      title: "Processing video...",
-      description: "Rendering captions into your video. This may take a few moments.",
-    });
+    setProgress(10);
 
     // Create a new video element to avoid audio issues with existing one
     const tempVideo = document.createElement('video');
@@ -321,9 +323,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     tempVideo.crossOrigin = "anonymous";
     tempVideo.muted = true; // Mute the temp video to avoid double audio
     
+    setProgress(30);
     await tempVideo.play();
     tempVideo.pause();
     tempVideo.currentTime = 0;
+    setProgress(40);
 
     // Capture canvas stream
     const canvasStream = canvas.captureStream(30); // 30 fps
@@ -340,6 +344,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       ...dest.stream.getAudioTracks()
     ];
     const combinedStream = new MediaStream(tracks);
+    setProgress(50);
 
     const mimeCandidates = [
       'video/webm;codecs=vp9,opus',
@@ -378,20 +383,35 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       audioContext.close();
       tempVideo.remove();
       
+      setProgress(100);
+      setIsProcessing(false);
+      
       toast({
         title: "Download complete!",
-        description: "Your video with burned-in captions and ASS file have been downloaded.",
+        description: "Your video with burned-in captions has been downloaded.",
+        duration: 3000,
       });
     };
 
     // Start recording
+    setProgress(60);
+    toast({
+      title: "Recording video...",
+      description: "Capturing frames with captions burned in.",
+      duration: 300000,
+    });
     mediaRecorder.start(100); // Collect data every 100ms
 
     const renderFrame = () => {
       if (tempVideo.ended) {
+        setProgress(90);
         mediaRecorder.stop();
         return;
       }
+
+      // Update progress based on video time
+      const progressPercent = 60 + (tempVideo.currentTime / tempVideo.duration) * 30;
+      setProgress(Math.round(progressPercent));
 
       // Draw video frame
       ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
