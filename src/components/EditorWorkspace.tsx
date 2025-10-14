@@ -681,15 +681,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             </div>
           )}
 
-          {/* Global Font Change Section */}
+          {/* Apply to All Text Section */}
           {captions.length > 0 && (
-            <div className="bg-gradient-purple-blue p-6 rounded-2xl border-2 border-primary shadow-glow">
-              <h3 className="text-2xl font-bebas tracking-wide text-purple-300 mb-4">🎨 Change Font for All Text</h3>
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <Label className="font-bebas text-lg text-white mb-2 block">Select Font</Label>
+            <div className="bg-gradient-purple-blue p-6 rounded-2xl border-2 border-primary shadow-glow space-y-4">
+              <h3 className="text-2xl font-bebas tracking-wide text-purple-300 mb-4 text-center">🎨 Apply to All Text</h3>
+              
+              {/* Global Font */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Font</Label>
+                <div className="flex gap-2 items-end">
                   <Select value={globalFont} onValueChange={setGlobalFont}>
-                    <SelectTrigger className="w-full p-3 rounded-lg border-2 border-white/50 bg-white text-lg" style={{ fontFamily: globalFont }}>
+                    <SelectTrigger className="w-full p-3 rounded-lg border-2 border-primary/50 bg-white text-lg" style={{ fontFamily: globalFont }}>
                       <SelectValue placeholder="Select font" />
                     </SelectTrigger>
                     <SelectContent className="z-50">
@@ -707,12 +709,66 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button 
+                    onClick={applyFontToAll}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 h-[52px] px-8 text-lg font-bebas tracking-wider whitespace-nowrap"
+                  >
+                    Apply Font
+                  </Button>
                 </div>
-                <Button 
-                  onClick={applyFontToAll}
-                  className="bg-white text-primary hover:bg-white/90 h-[52px] px-8 text-lg font-bebas tracking-wider"
+              </div>
+
+              {/* Global Color */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30">
+                <Label className="font-bebas text-lg text-primary mb-2 block">Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    id="global-color"
+                    defaultValue="#ffffff"
+                    className="h-12 w-20 cursor-pointer"
+                  />
+                  <Button
+                    onClick={() => {
+                      const colorInput = document.getElementById('global-color') as HTMLInputElement;
+                      const newColor = colorInput.value;
+                      setCaptions(captions.map(cap => ({ ...cap, color: newColor })));
+                      toast({ title: "Color applied to all text!" });
+                    }}
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bebas text-lg"
+                  >
+                    Apply Color
+                  </Button>
+                </div>
+              </div>
+
+              {/* Global Size */}
+              <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30">
+                <Label className="font-bebas text-lg text-primary mb-2 block" htmlFor="global-size-value">
+                  Size <span id="global-size-value">32</span>px
+                </Label>
+                <input
+                  type="range"
+                  id="global-size"
+                  min="16"
+                  max="72"
+                  defaultValue="32"
+                  onChange={(e) => {
+                    const valueSpan = document.getElementById('global-size-value');
+                    if (valueSpan) valueSpan.textContent = e.target.value;
+                  }}
+                  className="w-full mb-3"
+                />
+                <Button
+                  onClick={() => {
+                    const sizeInput = document.getElementById('global-size') as HTMLInputElement;
+                    const newSize = parseInt(sizeInput.value);
+                    setCaptions(captions.map(cap => ({ ...cap, fontSize: newSize })));
+                    toast({ title: `Size ${newSize}px applied to all text!` });
+                  }}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bebas text-lg"
                 >
-                  Apply to All
+                  Apply Size
                 </Button>
               </div>
             </div>
@@ -818,64 +874,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 </div>
               </div>
 
-              {/* Apply to All Section */}
-              <div className="md:col-span-2 bg-gradient-to-br from-purple-500/20 to-blue-500/20 p-6 rounded-xl border-2 border-primary/40 shadow-glow space-y-4">
-                <h3 className="font-bebas text-2xl text-primary tracking-wide text-center">Apply to All Text 🎯</h3>
-                
-                {/* Global Color */}
-                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30">
-                  <Label className="font-bebas text-lg text-primary mb-2 block">Global Color 🎨</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      id="global-color"
-                      defaultValue="#ffffff"
-                      className="h-12 w-20 cursor-pointer"
-                    />
-                    <Button
-                      onClick={() => {
-                        const colorInput = document.getElementById('global-color') as HTMLInputElement;
-                        const newColor = colorInput.value;
-                        setCaptions(captions.map(cap => ({ ...cap, color: newColor })));
-                        toast({ title: "Color applied to all text!" });
-                      }}
-                      className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bebas text-lg"
-                    >
-                      Apply Color
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Global Size */}
-                <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30">
-                  <Label className="font-bebas text-lg text-primary mb-2 block" htmlFor="global-size-value">
-                    Global Size 📏 <span id="global-size-value">32</span>px
-                  </Label>
-                  <input
-                    type="range"
-                    id="global-size"
-                    min="16"
-                    max="72"
-                    defaultValue="32"
-                    onChange={(e) => {
-                      const valueSpan = document.getElementById('global-size-value');
-                      if (valueSpan) valueSpan.textContent = e.target.value;
-                    }}
-                    className="w-full mb-3"
-                  />
-                  <Button
-                    onClick={() => {
-                      const sizeInput = document.getElementById('global-size') as HTMLInputElement;
-                      const newSize = parseInt(sizeInput.value);
-                      setCaptions(captions.map(cap => ({ ...cap, fontSize: newSize })));
-                      toast({ title: `Size ${newSize}px applied to all text!` });
-                    }}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bebas text-lg"
-                  >
-                    Apply Size
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
 
