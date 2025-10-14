@@ -264,78 +264,76 @@ export const EditorWorkspace = () => {
           </div>
         )}
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Video Preview - Left */}
-          <div className="lg:col-span-2 space-y-6">
-            {videoUrl && (
-              <div className="relative w-full">
-                <video
-                  ref={videoRef}
-                  src={videoUrl}
-                  className="w-full rounded-lg border border-border"
-                  controls
-                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                />
-                {/* Caption overlay on video */}
-                {(() => {
-                  const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-                  if (currentIndex === -1) return null;
-                  
-                  // Get 2 words before and 2 words after the current word (total 5 words)
-                  const startIndex = Math.max(0, currentIndex - 2);
-                  const endIndex = Math.min(captions.length, currentIndex + 3);
-                  const visibleWords = captions.slice(startIndex, endIndex);
-                  
-                  const currentCaption = captions[currentIndex];
-                  
-                  return (
-                    <div 
-                      className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none px-8"
-                    >
-                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-                        {visibleWords.map((caption, idx) => {
-                          const isCurrentWord = startIndex + idx === currentIndex;
-                          return (
-                            <span
-                              key={startIndex + idx}
-                              style={{
-                                fontFamily: caption.fontFamily || "Inter",
-                                fontSize: `${caption.fontSize || 32}px`,
-                                color: caption.color || "#ffffff",
-                                fontWeight: caption.isKeyword ? "bold" : "normal",
-                                textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
-                                padding: isCurrentWord ? "4px 12px" : "0",
-                                borderRadius: isCurrentWord ? "8px" : "0",
-                                transition: "all 0.2s ease",
-                              }}
-                            >
-                              {caption.word}
-                            </span>
-                          );
-                        })}
-                      </div>
+        {/* Word Editor - Top */}
+        {captions.length > 0 && (
+          <WordEditor
+            caption={selectedCaption}
+            onUpdate={handleWordUpdate}
+          />
+        )}
+
+        {/* Video Preview and Timeline - Below */}
+        <div className="space-y-6">
+          {videoUrl && (
+            <div className="relative w-full">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                className="w-full rounded-lg border border-border"
+                controls
+                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+              />
+              {/* Caption overlay on video */}
+              {(() => {
+                const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
+                if (currentIndex === -1) return null;
+                
+                // Get 2 words before and 2 words after the current word (total 5 words)
+                const startIndex = Math.max(0, currentIndex - 2);
+                const endIndex = Math.min(captions.length, currentIndex + 3);
+                const visibleWords = captions.slice(startIndex, endIndex);
+                
+                const currentCaption = captions[currentIndex];
+                
+                return (
+                  <div 
+                    className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none px-8"
+                  >
+                    <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                      {visibleWords.map((caption, idx) => {
+                        const isCurrentWord = startIndex + idx === currentIndex;
+                        return (
+                          <span
+                            key={startIndex + idx}
+                            style={{
+                              fontFamily: caption.fontFamily || "Inter",
+                              fontSize: `${caption.fontSize || 32}px`,
+                              color: caption.color || "#ffffff",
+                              fontWeight: caption.isKeyword ? "bold" : "normal",
+                              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                              backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
+                              padding: isCurrentWord ? "4px 12px" : "0",
+                              borderRadius: isCurrentWord ? "8px" : "0",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {caption.word}
+                          </span>
+                        );
+                      })}
                     </div>
-                  );
-                })()}
-              </div>
-            )}
-            <CaptionTimeline
-              captions={captions}
-              currentTime={currentTime}
-              onWordClick={handleWordClick}
-              onWordSelect={handleWordSelect}
-              selectedWordIndex={selectedWordIndex}
-            />
-          </div>
-          
-          {/* Word Editor - Right */}
-          <div>
-            <WordEditor
-              caption={selectedCaption}
-              onUpdate={handleWordUpdate}
-            />
-          </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+          <CaptionTimeline
+            captions={captions}
+            currentTime={currentTime}
+            onWordClick={handleWordClick}
+            onWordSelect={handleWordSelect}
+            selectedWordIndex={selectedWordIndex}
+          />
         </div>
       </div>
     </section>
