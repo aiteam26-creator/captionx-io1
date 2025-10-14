@@ -40,6 +40,8 @@ export const ProEditorWorkspace = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -288,10 +290,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   const downloadVideoWithCaptions = async () => {
     if (!videoRef.current || !videoFile) return;
 
+    setIsExporting(true);
+    setExportProgress(0);
+
     toast({
-      title: "Processing video...",
-      description: "Rendering captions onto video frames",
-      duration: 300000,
+      title: "Starting export...",
+      description: "This may take a moment",
     });
 
     const video = videoRef.current;
@@ -348,10 +352,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     });
 
     mediaRecorder.start();
+    
+    // Speed up playback for faster export (but keep audio in sync)
+    video.playbackRate = 1.5;
     video.play();
 
     const drawFrame = () => {
       const currentTime = video.currentTime;
+      const progress = (currentTime / video.duration) * 100;
+      setExportProgress(Math.min(progress, 99));
       
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -398,9 +407,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       if (currentTime < video.duration) {
         requestAnimationFrame(drawFrame);
       } else {
+        setExportProgress(100);
         mediaRecorder.stop();
         video.pause();
+        video.playbackRate = 1.0;
         audioContext.close();
+        setIsExporting(false);
       }
     };
 
@@ -539,6 +551,29 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         onExport={handleExport}
         captionCount={captions.length}
       />
+
+      {/* Export Progress Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Exporting Video</h3>
+            <div className="space-y-4">
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${exportProgress}%` }}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                {exportProgress < 100 ? `Processing: ${Math.round(exportProgress)}%` : 'Finalizing...'}
+              </p>
+              <p className="text-xs text-muted-foreground text-center">
+                Please wait while we render your video with captions
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
