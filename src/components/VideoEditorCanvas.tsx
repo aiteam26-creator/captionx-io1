@@ -10,6 +10,7 @@ interface Caption {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
+  backgroundColor?: string;
   positionX?: number;
   positionY?: number;
 }
