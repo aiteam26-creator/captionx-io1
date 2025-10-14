@@ -100,7 +100,7 @@ serve(async (req) => {
     formData.append('file', blob, 'audio.webm');
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
-    formData.append('timestamp_granularities[]', 'segment');
+    formData.append('timestamp_granularities[]', 'word');
 
     console.log('Sending to OpenAI Whisper...');
 
@@ -120,12 +120,9 @@ serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log('Transcription completed');
+    console.log('Transcription completed with word-level timestamps');
 
-    // Generate ASS caption file
-    const assContent = generateASSFile(result.segments || []);
-
-    // Parse segments into word-level captions
+    // Parse word-level captions with accurate timestamps
     const captions: Array<{
       word: string;
       start: number;
@@ -136,25 +133,27 @@ serve(async (req) => {
       color: string;
     }> = [];
     
-    if (result.segments) {
-      for (const segment of result.segments) {
-        const words = segment.text.trim().split(/\s+/);
-        const duration = segment.end - segment.start;
-        const timePerWord = duration / words.length;
-        
-        words.forEach((word: string, idx: number) => {
-          captions.push({
-            word: word,
-            start: segment.start + (idx * timePerWord),
-            end: segment.start + ((idx + 1) * timePerWord),
-            isKeyword: false,
-            fontSize: 32,
-            fontFamily: 'Inter',
-            color: '#ffffff'
-          });
+    if (result.words) {
+      result.words.forEach((wordData: any) => {
+        captions.push({
+          word: wordData.word.trim(),
+          start: wordData.start,
+          end: wordData.end,
+          isKeyword: false,
+          fontSize: 32,
+          fontFamily: 'Inter',
+          color: '#ffffff'
         });
-      }
+      });
     }
+
+    // Generate ASS caption file from word-level captions
+    const assSegments = captions.map(cap => ({
+      text: cap.word,
+      start: cap.start,
+      end: cap.end
+    }));
+    const assContent = generateASSFile(assSegments);
 
     return new Response(
       JSON.stringify({ 
