@@ -7,6 +7,7 @@ import { Card } from "./ui/card";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { getKeyframesForVideo } from "@/utils/keyframeExtractor";
+import { AssPreviewOverlay } from "./AssPreviewOverlay";
 
 interface Caption {
   word: string;
@@ -214,34 +215,13 @@ export const ThemedCaptionGenerator = ({
             </>
           )}
         </Button>
-
-        {generatedAssContent && (
-          <Button
-            onClick={handleDownload}
-            variant="outline"
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Download .ass
-          </Button>
-        )}
       </div>
 
-      {generatedAssContent && (
-        <Card className="p-4 bg-muted/50">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold">Preview</p>
-              <span className="text-xs text-muted-foreground">
-                {generatedAssContent.length.toLocaleString()} characters
-              </span>
-            </div>
-            <pre className="text-xs max-h-40 overflow-auto p-3 bg-background rounded border">
-              {generatedAssContent.slice(0, 500)}...
-            </pre>
-          </div>
-        </Card>
-      )}
+      <AssPreviewOverlay
+        videoRef={videoRef}
+        assContent={generatedAssContent}
+        onAssContentChange={setGeneratedAssContent}
+      />
     </Card>
   );
 };

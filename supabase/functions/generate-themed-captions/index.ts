@@ -36,54 +36,167 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    // Build prompt for AI
-    const systemPrompt = `You are an expert subtitle designer specializing in Advanced SubStation Alpha (.ass) format. Your task is to create visually stunning, thematically appropriate captions that enhance the viewing experience.
+    // Build enhanced prompt for AI
+    const systemPrompt = `You are an expert subtitle designer specializing in Advanced SubStation Alpha (.ass) format. Create broadcast-quality, professionally styled captions.
 
-Key Requirements:
-1. Generate complete .ass file content with proper headers and styling
-2. Position captions to avoid overlapping faces and other captions
-3. Emphasize key words with bold, color changes, or size variations
-4. Use typography and effects that match the theme
-5. Ensure captions are arranged in neat, readable lines
-6. Apply theme-appropriate colors, fonts, and animations
+CRITICAL REQUIREMENTS:
+1. Generate COMPLETE, VALID .ass file with all required sections
+2. Use V4+ Styles format (most compatible)
+3. Position captions intelligently to avoid faces (typically at y: 300-700)
+4. Create multiple style definitions for visual hierarchy
+5. Emphasize key words with appropriate styling
+6. Ensure perfect readability on all backgrounds
+7. Apply theme-specific visual identity consistently
 
-Available positioning strategies:
+POSITIONING STRATEGY (1920x1080 video):
+- Safe zones: Bottom (y: 900-1000), Top (y: 50-150), Sides (x: 50-200, 1720-1870)
+- AVOID center region (y: 300-700, x: 600-1320) where faces appear
 - Use \\pos(x,y) for precise placement
-- Use \\an alignment tags (1-9 numpad notation)
-- Consider video dimensions: 1920x1080
-- Avoid center region (faces typically appear at y: 300-700)
-- Preferred safe zones: top (y: 50-200), bottom (y: 880-1000), sides (x: 50-200, 1720-1870)
+- Use \\an alignment: 1=bottom-left, 2=bottom-center, 3=bottom-right, 7=top-left, 8=top-center, 9=top-right
+- Stagger positions when captions overlap in time
 
-Theme guidelines:
-- Robotic: Monospace fonts, cyan/blue colors, glitch effects, precise positioning
-- Nature: Organic fonts, green/earth tones, flowing animations, scattered placement
-- Cinematic: Serif fonts, dramatic colors, fade effects, bottom-center with artistic touches
-- Minimal: Simple sans-serif, white/black, clean positioning, no effects
-- Neon: Bold fonts, vibrant colors, glow effects, dynamic positioning`;
+STYLING TAGS:
+- \\b1 = bold, \\i1 = italic
+- \\fs<size> = font size
+- \\c&H<color>& = primary color (BGR hex)
+- \\1c, \\2c, \\3c, \\4c = primary, secondary, outline, shadow colors
+- \\bord<width> = outline width
+- \\shad<depth> = shadow depth
+- \\fad(in,out) = fade in/out in milliseconds
+- \\t(start,end,\\<tag>) = animated transformation
 
-    const userPrompt = `Create Advanced SubStation Alpha (.ass) captions for a ${videoDuration.toFixed(2)} second video with the "${theme}" theme.
+THEME STYLING GUIDES:
 
-Transcription with timings:
-${captions.map((c: Caption, i: number) => 
-  `${i + 1}. "${c.word}" (${c.start.toFixed(2)}s - ${c.end.toFixed(2)}s)`
-).join('\n')}
+CINEMATIC: Elegant, dramatic, film-quality
+- Fonts: "Trajan Pro", "Garamond", "Baskerville"
+- Colors: Gold (#FFD700), White (#FFFFFF), Deep Red (#8B0000)
+- Effects: \\fad(300,300), subtle shadows, serif fonts
+- Position: Bottom-center with artistic offset
+- Emphasis: \\b1\\fs48 for key words, italic for emotion
+
+ROBOTIC: Technical, futuristic, precise
+- Fonts: "Courier New", "Consolas", "Roboto Mono"
+- Colors: Cyan (#00FFFF), Electric Blue (#0080FF), White (#FFFFFF)
+- Effects: \\bord3, sharp outlines, no fades
+- Position: Grid-aligned, mathematical spacing
+- Emphasis: \\c&H00FFFF& (cyan) for key words, monospace consistency
+
+NATURE: Organic, flowing, earth-toned
+- Fonts: "Palatino", "Georgia", "Century Schoolbook"
+- Colors: Forest Green (#228B22), Earth Brown (#8B4513), Cream (#FFFACD)
+- Effects: \\fad(400,400), soft shadows, flowing placement
+- Position: Scattered naturally, avoid rigid alignment
+- Emphasis: Larger size \\fs44, earth tone colors
+
+NEON: Vibrant, bold, high-energy
+- Fonts: "Impact", "Arial Black", "Bebas Neue"
+- Colors: Hot Pink (#FF1493), Electric Yellow (#FFFF00), Cyan (#00FFFF)
+- Effects: \\bord4\\shad0, heavy outline, glow effect
+- Position: Dynamic, asymmetric placement
+- Emphasis: Color shifts, \\b1\\fs52 for impact
+
+MINIMAL: Clean, simple, elegant
+- Fonts: "Helvetica", "Arial", "Futura"
+- Colors: White (#FFFFFF), Black outline
+- Effects: \\bord2\\shad1, minimal styling
+- Position: Bottom-center, consistent
+- Emphasis: \\b1 only, subtle size increase \\fs40
+
+RETRO: Vintage, warm, nostalgic
+- Fonts: "Cooper Black", "Courier", "American Typewriter"
+- Colors: Warm Orange (#FF8C00), Vintage Yellow (#FFD700), Sepia
+- Effects: \\bord2, warm shadows, classic positioning
+- Position: Bottom-center, old-school placement
+- Emphasis: \\b1\\i1, retro color palette
+
+FILE STRUCTURE:
+[Script Info]
+Title: [Theme] Captions
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: [Create 3-5 styles: Default, Emphasis, Strong, Subtle]
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: [Each caption with proper timing and styling]
+
+QUALITY CHECKLIST:
+✓ All timings in format: H:MM:SS.CS (e.g., 0:00:01.50)
+✓ No overlapping captions at same position
+✓ Key words properly emphasized
+✓ Theme colors applied consistently
+✓ Readable on light AND dark backgrounds
+✓ Professional typography spacing
+✓ Smooth timing transitions`;
+
+    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme.
+
+VIDEO DETAILS:
+- Duration: ${videoDuration.toFixed(2)} seconds
+- Resolution: 1920x1080
+- Theme: ${theme}
+- Total words: ${captions.length}
+
+WORD-BY-WORD TRANSCRIPTION:
+${captions.map((c: Caption, i: number) => {
+  const duration = (c.end - c.start).toFixed(2);
+  const isLongWord = c.word.length > 8;
+  const hasExclamation = c.word.includes('!') || c.word.includes('?');
+  const emphasis = isLongWord || hasExclamation ? ' [EMPHASIZE]' : '';
+  return `${String(i + 1).padStart(3, '0')}. "${c.word}" | ${c.start.toFixed(2)}s → ${c.end.toFixed(2)}s (${duration}s)${emphasis}`;
+}).join('\n')}
 
 ${keyframes && keyframes.length > 0 ? `
-Scene information (keyframes):
+SCENE CONTEXT (for positioning):
 ${keyframes.map((kf: Keyframe) => 
-  `Shot ${kf.shot_number} at ${kf.timestamp.toFixed(2)}s: "${kf.transcription}"`
+  `Shot ${kf.shot_number} @ ${kf.timestamp.toFixed(2)}s: "${kf.transcription}"\n  → Avoid center, prefer ${kf.shot_number % 2 === 0 ? 'bottom' : 'top'} positioning`
 ).join('\n')}
 ` : ''}
 
-Generate a complete .ass file that:
-1. Uses the V4+ Styles format
-2. Creates multiple style definitions for different emphasis levels
-3. Positions each caption to avoid overlaps and faces
-4. Emphasizes important words appropriately
-5. Applies theme-specific visual effects
-6. Ensures all captions are readable and aesthetically balanced
+GENERATION INSTRUCTIONS:
+1. Create 4 style definitions:
+   - "Default": Standard caption style
+   - "Emphasis": For important words (20% larger, theme accent color)
+   - "Strong": For very important words (40% larger, bold, primary theme color)
+   - "Subtle": For secondary words (10% smaller, muted color)
 
-Return ONLY the complete .ass file content, starting with [Script Info] and including all sections.`;
+2. Position each caption:
+   - Analyze timing overlaps
+   - Alternate between safe zones (bottom: y=950, top: y=100, left: x=150, right: x=1770)
+   - NEVER place at center (y=400-700)
+   - Use \\pos(x,y) for precise control
+
+3. Apply emphasis:
+   - Words marked [EMPHASIZE] → use "Emphasis" or "Strong" style
+   - Long words (8+ chars) → slight size increase
+   - Question/exclamation marks → "Strong" style
+   - Regular words → "Default" style
+
+4. Theme-specific effects:
+   - Apply theme colors, fonts, and effects consistently
+   - Add appropriate transitions (fades, etc.)
+   - Ensure visual coherence throughout
+
+5. Timing precision:
+   - Use exact start/end times from transcription
+   - Format: 0:00:MM.SS (minutes:seconds.centiseconds)
+   - No gaps or overlaps in dialogue
+
+OUTPUT REQUIREMENTS:
+- Return ONLY the complete .ass file content
+- Start with [Script Info]
+- Include all sections: [V4+ Styles], [Events]
+- Every word must have a Dialogue line
+- Use proper .ass syntax
+- No markdown formatting, no explanations
+- Ready to save and use immediately
+
+Generate the complete .ass file now:`;
 
     // Call Lovable AI
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
