@@ -241,9 +241,13 @@ export const EditorWorkspace = () => {
         : caption
     ));
 
+    // Deselect the word after saving so playback can resume
+    setSelectedWordIndex(null);
+    setEditedCaption(null);
+
     toast({
       title: "Changes saved!",
-      description: "Your caption edits have been applied",
+      description: "Your caption edits have been applied. Play the video to see them!",
     });
   };
 
