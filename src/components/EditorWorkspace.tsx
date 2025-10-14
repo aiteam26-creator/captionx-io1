@@ -395,7 +395,14 @@ export const EditorWorkspace = () => {
                   className="w-full p-2 rounded-lg border border-primary/50 bg-white"
                   style={{ fontFamily: selectedCaption.fontFamily || "Inter" }}
                 >
-                  {["Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", "Righteous", "Audiowide", "Black Ops One", "Fredoka One"].map(font => (
+                  {[
+                    "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
+                    "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
+                    "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
+                    "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
+                    "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
+                    "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
+                  ].map(font => (
                     <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
                   ))}
                 </select>
