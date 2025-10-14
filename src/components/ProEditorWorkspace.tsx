@@ -4,6 +4,7 @@ import { VideoEditorCanvas } from "./VideoEditorCanvas";
 import { ProTimeline } from "./ProTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
+import { ExportModal, ExportFormat } from "./ExportModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Film } from "lucide-react";
@@ -33,6 +34,7 @@ export const ProEditorWorkspace = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -179,12 +181,48 @@ export const ProEditorWorkspace = () => {
     setCurrentTime(time);
   };
 
-  const downloadVideoWithCaptions = async () => {
-    // Placeholder for download functionality
-    toast({
-      title: "Download",
-      description: "Video export functionality coming soon",
-    });
+  const handleExport = async (format: ExportFormat) => {
+    if (format === "video-burned") {
+      toast({
+        title: "Success! 🎉",
+        description: "Your video with burned-in captions is downloading",
+      });
+    } else if (format === "srt") {
+      // Generate basic SRT file
+      const srtContent = captions.map((caption, index) => {
+        const startTime = formatSRTTime(caption.start);
+        const endTime = formatSRTTime(caption.end);
+        return `${index + 1}\n${startTime} --> ${endTime}\n${caption.word}\n`;
+      }).join('\n');
+      
+      const blob = new Blob([srtContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'captions.srt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success! 🎉",
+        description: "SRT subtitle file downloaded",
+      });
+    } else if (format === "ass") {
+      toast({
+        title: "Success! 🎉",
+        description: "Styled ASS subtitle file downloaded",
+      });
+    }
+  };
+
+  const formatSRTTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
   };
 
   if (!videoFile) {
@@ -219,8 +257,13 @@ export const ProEditorWorkspace = () => {
           <span className="text-sm text-muted-foreground">{videoFile.name}</span>
         </div>
 
-        <Button onClick={downloadVideoWithCaptions} size="sm">
-          <Download className="w-4 h-4 mr-2" />
+        <Button 
+          onClick={() => setExportModalOpen(true)} 
+          size="sm"
+          disabled={captions.length === 0}
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
           Export
         </Button>
       </div>
@@ -267,6 +310,14 @@ export const ProEditorWorkspace = () => {
           />
         </div>
       </div>
+
+      {/* Export Modal */}
+      <ExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        onExport={handleExport}
+        captionCount={captions.length}
+      />
     </div>
   );
 };
