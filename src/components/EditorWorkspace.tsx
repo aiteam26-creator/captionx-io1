@@ -694,7 +694,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           {/* Global Font Change Section */}
           {captions.length > 0 && (
             <div className="bg-gradient-purple-blue p-6 rounded-2xl border-2 border-primary shadow-glow">
-              <h3 className="text-2xl font-bebas tracking-wide text-white mb-4">🎨 Change Font for All Text</h3>
+              <h3 className="text-2xl font-bebas tracking-wide text-purple-300 mb-4">🎨 Change Font for All Text</h3>
               <div className="flex gap-4 items-end">
                 <div className="flex-1">
                   <Label className="font-bebas text-lg text-white mb-2 block">Select Font</Label>
