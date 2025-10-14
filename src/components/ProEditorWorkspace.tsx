@@ -145,8 +145,13 @@ export const ProEditorWorkspace = () => {
 
   const handleCaptionClick = (index: number) => {
     setSelectedWordIndex(index);
-    if (videoRef.current && !isPlaying) {
+    if (videoRef.current) {
+      // Pause video and seek to the word's start time
       videoRef.current.currentTime = captions[index].start;
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
     }
   };
 
