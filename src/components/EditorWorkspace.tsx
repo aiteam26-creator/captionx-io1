@@ -588,6 +588,29 @@ export const EditorWorkspace = () => {
             </div>
           )}
 
+          {/* Download Buttons Section */}
+          {captions.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                <Button 
+                  onClick={downloadVideoWithCaptions} 
+                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Download Video with Captions
+                </Button>
+              </div>
+              <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                <Button 
+                  onClick={downloadAssFile} 
+                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                >
+                  ⬇️ Download .ASS Subtitle File
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Global Font Change Section */}
           {captions.length > 0 && (
             <div className="bg-gradient-purple-blue p-6 rounded-2xl border-2 border-primary shadow-glow">
@@ -713,31 +736,14 @@ export const EditorWorkspace = () => {
                 />
               </div>
 
-              {/* Save and Download Buttons */}
-              <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Save Changes Button */}
+              <div className="md:col-span-2 lg:col-span-4">
                 <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
                   <Button 
                     onClick={saveWordChanges} 
                     className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
                   >
                     💾 Save Changes
-                  </Button>
-                </div>
-                <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
-                  <Button 
-                    onClick={downloadVideoWithCaptions} 
-                    className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    Download Video
-                  </Button>
-                </div>
-                <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
-                  <Button 
-                    onClick={downloadAssFile} 
-                    className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
-                  >
-                    ⬇️ Download .ASS
                   </Button>
                 </div>
               </div>
