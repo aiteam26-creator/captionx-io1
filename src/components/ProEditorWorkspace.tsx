@@ -78,7 +78,7 @@ export const ProEditorWorkspace = () => {
           video.pause();
           mediaRecorder.stop();
           source.disconnect();
-        }, Math.min(video.duration * 1000, 60000));
+        }, video.duration * 1000);
       };
       
       video.onerror = reject;
