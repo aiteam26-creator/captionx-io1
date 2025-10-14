@@ -202,18 +202,130 @@ export const EditorWorkspace = () => {
     }
   };
 
-  const downloadASS = () => {
-    if (!assContent) return;
+  const downloadVideoWithCaptions = async () => {
+    if (!videoRef.current || !videoUrl || captions.length === 0) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
     
-    const blob = new Blob([assContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'captions.ass';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!ctx) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const stream = canvas.captureStream(30); // 30 fps
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 5000000
+    });
+
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'video-with-captions.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download complete!",
+        description: "Your video with captions has been downloaded",
+      });
+    };
+
+    // Start recording
+    mediaRecorder.start();
+    video.currentTime = 0;
+    video.muted = false;
+
+    const renderFrame = () => {
+      if (!ctx || video.ended || video.paused) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      // Draw video frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Find and draw current captions (5 words at a time)
+      const currentTime = video.currentTime;
+      const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
+      
+      if (currentIndex !== -1) {
+        const startIndex = Math.max(0, currentIndex - 2);
+        const endIndex = Math.min(captions.length, currentIndex + 3);
+        const visibleWords = captions.slice(startIndex, endIndex);
+        const currentCaption = captions[currentIndex];
+
+        // Setup text styling
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        
+        // Calculate total width to center the group
+        let totalWidth = 0;
+        const wordWidths: number[] = [];
+        
+        visibleWords.forEach((caption) => {
+          ctx.font = `${caption.fontSize || 32}px "${caption.fontFamily || 'Inter'}"`;
+          const width = ctx.measureText(caption.word).width;
+          wordWidths.push(width);
+          totalWidth += width + 10; // Add gap
+        });
+
+        // Start position (centered)
+        let xPos = (canvas.width - totalWidth) / 2;
+        const yPos = canvas.height - 100; // Bottom position
+
+        // Draw each word
+        visibleWords.forEach((caption, idx) => {
+          const wordIndex = startIndex + idx;
+          const isCurrentWord = wordIndex === currentIndex;
+          
+          ctx.font = `${isCurrentWord ? 'bold' : 'normal'} ${caption.fontSize || 32}px "${caption.fontFamily || 'Inter'}"`;
+          
+          // Draw background for current word
+          if (isCurrentWord) {
+            const padding = 14;
+            const bgWidth = wordWidths[idx] + padding * 2;
+            const bgHeight = (caption.fontSize || 32) + padding;
+            
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+            ctx.beginPath();
+            ctx.roundRect(xPos - padding, yPos - (caption.fontSize || 32) - padding, bgWidth, bgHeight, 10);
+            ctx.fill();
+          }
+          
+          // Draw text shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+          ctx.fillText(caption.word, xPos + wordWidths[idx] / 2 + 3, yPos + 3);
+          
+          // Draw text
+          ctx.fillStyle = caption.color || '#ffffff';
+          ctx.fillText(caption.word, xPos + wordWidths[idx] / 2, yPos);
+          
+          xPos += wordWidths[idx] + 10;
+        });
+      }
+
+      requestAnimationFrame(renderFrame);
+    };
+
+    // Start playback and rendering
+    video.play();
+    renderFrame();
+
+    toast({
+      title: "Processing video...",
+      description: "Rendering captions into your video. This may take a few moments.",
+    });
   };
 
   const handleWordClick = (index: number, time: number) => {
@@ -538,11 +650,11 @@ export const EditorWorkspace = () => {
                 </div>
                 <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
                   <Button 
-                    onClick={downloadASS} 
+                    onClick={downloadVideoWithCaptions} 
                     className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
                   >
                     <Download className="w-5 h-5 mr-2" />
-                    Download .ASS
+                    Download Video
                   </Button>
                 </div>
               </div>
