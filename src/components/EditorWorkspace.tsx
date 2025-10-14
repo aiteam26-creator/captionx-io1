@@ -238,8 +238,7 @@ export const EditorWorkspace = () => {
       return;
     }
 
-    // First download the ASS file
-    downloadAssFile();
+    // Prepare to render captions into the video
 
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
@@ -282,10 +281,19 @@ export const EditorWorkspace = () => {
     ];
     const combinedStream = new MediaStream(tracks);
 
-    const mediaRecorder = new MediaRecorder(combinedStream, {
-      mimeType: 'video/webm;codecs=vp9,opus',
-      videoBitsPerSecond: 5000000
-    });
+    const mimeCandidates = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm'
+    ];
+    const selectedMime = (typeof MediaRecorder !== 'undefined' && (MediaRecorder as any).isTypeSupported)
+      ? (mimeCandidates.find((type) => (MediaRecorder as any).isTypeSupported(type)) || '')
+      : '';
+
+    const mediaRecorder = new MediaRecorder(combinedStream, selectedMime
+      ? { mimeType: selectedMime, videoBitsPerSecond: 5000000 }
+      : { videoBitsPerSecond: 5000000 }
+    );
 
     const chunks: Blob[] = [];
     mediaRecorder.ondataavailable = (e) => {
@@ -295,11 +303,12 @@ export const EditorWorkspace = () => {
     };
     
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
+      const fileExtension = selectedMime.includes('mp4') ? 'mp4' : 'webm';
+      const blob = new Blob(chunks, { type: selectedMime || `video/${fileExtension}` });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'video-with-captions.webm';
+      a.download = `video-with-captions.${fileExtension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -705,7 +714,7 @@ export const EditorWorkspace = () => {
               </div>
 
               {/* Save and Download Buttons */}
-              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
                   <Button 
                     onClick={saveWordChanges} 
@@ -721,6 +730,14 @@ export const EditorWorkspace = () => {
                   >
                     <Download className="w-5 h-5 mr-2" />
                     Download Video
+                  </Button>
+                </div>
+                <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                  <Button 
+                    onClick={downloadAssFile} 
+                    className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                  >
+                    ⬇️ Download .ASS
                   </Button>
                 </div>
               </div>
