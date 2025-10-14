@@ -7,6 +7,7 @@ import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
 import { KeyframeExtractor } from "./KeyframeExtractor";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
+import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Film } from "lucide-react";
@@ -172,6 +173,13 @@ export const ProEditorWorkspace = () => {
     ));
   };
 
+  const handleGlobalCaptionUpdate = (updates: Partial<Caption>) => {
+    setCaptions(prev => prev.map(caption => ({
+      ...caption,
+      ...updates
+    })));
+  };
+
   const handleCaptionResize = (index: number, newStart: number, newEnd: number) => {
     setCaptions(prev => prev.map((caption, i) => 
       i === index ? { ...caption, start: newStart, end: newEnd } : caption
@@ -327,14 +335,26 @@ export const ProEditorWorkspace = () => {
         {/* Right sidebar: Properties panel */}
         <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
           <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
-            <h2 className="text-sm font-semibold">Properties</h2>
+            <h2 className="text-sm font-semibold">Settings</h2>
           </div>
           <div className="p-4 space-y-6">
+            {/* Global Settings */}
+            <GlobalCaptionSettings
+              captions={captions}
+              onApplySettings={handleGlobalCaptionUpdate}
+            />
+
+            <Separator />
+
+            {/* Individual Caption Properties */}
             <PropertiesPanel
               caption={selectedCaption}
               onUpdate={handleCaptionUpdate}
             />
             
+            <Separator />
+
+            {/* AI Themed Captions */}
             <ThemedCaptionGenerator
               captions={captions}
               videoRef={videoRef}
