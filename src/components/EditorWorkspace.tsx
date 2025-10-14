@@ -64,9 +64,9 @@ export const EditorWorkspace = () => {
           
           const renderedBuffer = await offlineContext.startRendering();
           
-          // Convert to base64
+          // Convert to base64 using chunks to avoid stack overflow
           const wav = audioBufferToWav(renderedBuffer);
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(wav)));
+          const base64 = arrayBufferToBase64(wav);
           resolve(base64);
         } catch (error) {
           reject(error);
@@ -76,6 +76,19 @@ export const EditorWorkspace = () => {
       reader.onerror = reject;
       reader.readAsArrayBuffer(file);
     });
+  };
+
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000; // Process in 32KB chunks
+    let binary = '';
+    
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    
+    return btoa(binary);
   };
 
   const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
