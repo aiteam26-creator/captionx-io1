@@ -1,79 +1,52 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Caption {
   word: string;
   start: number;
   end: number;
   isKeyword?: boolean;
+  fontSize?: number;
+  fontFamily?: string;
+  color?: string;
 }
 
 interface VideoPreviewProps {
-  videoUrl: string;
   captions: Caption[];
   currentTime: number;
-  onTimeUpdate: (time: number) => void;
 }
 
-export const VideoPreview = ({ videoUrl, captions, currentTime, onTimeUpdate }: VideoPreviewProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [displayWords, setDisplayWords] = useState<Caption[]>([]);
+export const VideoPreview = ({ captions, currentTime }: VideoPreviewProps) => {
+  const [currentCaption, setCurrentCaption] = useState<Caption | null>(null);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = currentTime;
-    }
-  }, [currentTime]);
-
-  useEffect(() => {
-    // Find current word and get 2 words before and 2 after (total 5 words)
-    const currentIndex = captions.findIndex(
-      (caption) => currentTime >= caption.start && currentTime <= caption.end
+    const caption = captions.find(
+      (c) => currentTime >= c.start && currentTime <= c.end
     );
-
-    if (currentIndex !== -1) {
-      const start = Math.max(0, currentIndex - 2);
-      const end = Math.min(captions.length, currentIndex + 3);
-      setDisplayWords(captions.slice(start, end));
-    }
+    setCurrentCaption(caption || null);
   }, [currentTime, captions]);
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      onTimeUpdate(videoRef.current.currentTime);
-    }
-  };
-
   return (
-    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="w-full h-full"
-        controls
-        onTimeUpdate={handleTimeUpdate}
-      />
-      
-      {/* Caption Overlay */}
-      <div className="absolute bottom-20 left-0 right-0 px-8 pointer-events-none">
-        <div className="flex items-center justify-center gap-1 flex-wrap">
-          {displayWords.map((caption, idx) => {
-            const isCurrent = currentTime >= caption.start && currentTime <= caption.end;
-            return (
-              <span
-                key={idx}
-                className={`
-                  transition-all duration-200 whitespace-nowrap
-                  ${isCurrent ? "bg-primary text-primary-foreground px-2 py-1 rounded scale-110" : ""}
-                  ${caption.isKeyword ? "text-yellow-400 font-extrabold text-[calc(1em+3px)] drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" : "font-semibold"}
-                `}
-                style={{ fontSize: "2rem" }}
-              >
-                {caption.word}
-              </span>
-            );
-          })}
-        </div>
+    <div className="relative w-full aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden border border-border shadow-lg">
+      {/* Placeholder video area */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-muted-foreground text-sm">Video Preview Area</div>
       </div>
+
+      {/* Caption overlay */}
+      {currentCaption && (
+        <div 
+          className="absolute inset-x-0 bottom-0 pb-8 flex items-center justify-center"
+          style={{
+            fontFamily: currentCaption.fontFamily || "Inter",
+            fontSize: `${currentCaption.fontSize || 32}px`,
+            color: currentCaption.color || "#ffffff",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+            fontWeight: currentCaption.isKeyword ? "bold" : "normal",
+          }}
+        >
+          {currentCaption.word}
+        </div>
+      )}
     </div>
   );
 };
