@@ -3,11 +3,11 @@ import { CaptionTimeline } from "./CaptionTimeline";
 import { WordEditor } from "./WordEditor";
 import { VideoPreview } from "./VideoPreview";
 import { VideoUpload } from "./VideoUpload";
+import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Loader2 } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "./ui/button";
-import { Progress } from "./ui/progress";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
@@ -553,14 +553,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         </div>
 
         {isProcessing && (
-          <div className="mb-6 bg-white/80 backdrop-blur-sm p-6 rounded-2xl border-2 border-primary shadow-glow animate-bounce-in">
-            <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              <h3 className="text-lg font-bebas tracking-wide text-primary">Generating Captions...</h3>
-            </div>
-            <Progress value={progress} className="mb-2 h-3" />
-            <p className="text-sm text-muted-foreground font-poppins">{progress}% complete</p>
-          </div>
+          <CaptionGenerationLoader progress={progress} />
         )}
 
         

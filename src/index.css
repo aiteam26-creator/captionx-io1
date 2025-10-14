@@ -144,4 +144,17 @@ All colors MUST be HSL.
   .glass {
     @apply backdrop-blur-sm bg-background/80 border border-border/50;
   }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
 }
