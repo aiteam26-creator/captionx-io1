@@ -668,26 +668,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             </div>
           )}
 
-          {/* Download Buttons Section */}
+          {/* Download Button Section */}
           {captions.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
-                <Button 
-                  onClick={downloadVideoWithCaptions} 
-                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Video with Captions
-                </Button>
-              </div>
-              <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
-                <Button 
-                  onClick={downloadAssFile} 
-                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
-                >
-                  ⬇️ Download .ASS Subtitle File
-                </Button>
-              </div>
+            <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+              <Button 
+                onClick={downloadVideoWithCaptions} 
+                className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download Video with Captions
+              </Button>
             </div>
           )}
 
