@@ -6,6 +6,7 @@ import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
 import { KeyframeExtractor } from "./KeyframeExtractor";
+import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Film } from "lucide-react";
@@ -34,6 +35,7 @@ export const ProEditorWorkspace = () => {
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoId, setVideoId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -43,6 +45,8 @@ export const ProEditorWorkspace = () => {
     setVideoFile(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
+    const id = `video-${Date.now()}`;
+    setVideoId(id);
     await transcribeVideo(file);
   };
 
@@ -321,14 +325,22 @@ export const ProEditorWorkspace = () => {
         </div>
 
         {/* Right sidebar: Properties panel */}
-        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-hidden">
-          <div className="h-14 border-b border-border flex items-center px-6">
+        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
+          <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
             <h2 className="text-sm font-semibold">Properties</h2>
           </div>
-          <PropertiesPanel
-            caption={selectedCaption}
-            onUpdate={handleCaptionUpdate}
-          />
+          <div className="p-4 space-y-6">
+            <PropertiesPanel
+              caption={selectedCaption}
+              onUpdate={handleCaptionUpdate}
+            />
+            
+            <ThemedCaptionGenerator
+              captions={captions}
+              videoRef={videoRef}
+              videoId={videoId || undefined}
+            />
+          </div>
         </div>
       </div>
 
