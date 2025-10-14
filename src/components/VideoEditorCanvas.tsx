@@ -165,21 +165,37 @@ export const VideoEditorCanvas = ({
                     />
                   ) : (
                     <div
-                      className="relative px-4 py-2 rounded-lg backdrop-blur-sm transition-all duration-200"
+                      className={`
+                        relative px-6 py-3 rounded-lg transition-all duration-200
+                        ${caption.isKeyword ? 'font-bold animate-scale-in' : 'font-semibold'}
+                      `}
                       style={{
                         fontFamily: caption.fontFamily || "Inter",
                         fontSize: `${caption.fontSize || 32}px`,
                         color: caption.color || "#ffffff",
-                        textShadow: "2px 2px 8px rgba(0,0,0,0.9)",
                         backgroundColor: isSelected 
-                          ? "rgba(59, 130, 246, 0.3)" 
+                          ? "rgba(59, 130, 246, 0.4)" 
                           : isDragging 
-                          ? "rgba(59, 130, 246, 0.2)" 
-                          : "transparent",
-                        border: isSelected ? "2px solid rgba(59, 130, 246, 0.6)" : "2px solid transparent",
+                          ? "rgba(59, 130, 246, 0.3)" 
+                          : caption.backgroundColor || "rgba(0, 0, 0, 0.75)",
+                        textShadow: caption.isKeyword 
+                          ? "0 0 20px rgba(255, 215, 0, 0.8), 3px 3px 12px rgba(0,0,0,0.9)"
+                          : "2px 2px 8px rgba(0,0,0,0.9)",
+                        border: isSelected 
+                          ? "2px solid rgba(59, 130, 246, 0.8)" 
+                          : caption.isKeyword 
+                          ? "2px solid rgba(255, 215, 0, 0.3)"
+                          : "2px solid transparent",
+                        letterSpacing: caption.isKeyword ? "0.05em" : "normal",
+                        textTransform: caption.isKeyword ? "uppercase" : "none",
                       }}
                     >
                       {caption.word}
+                      
+                      {/* Keyword indicator */}
+                      {caption.isKeyword && !isSelected && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
+                      )}
                       
                       {/* Control hint on selected */}
                       {isSelected && !isDragging && (

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, Film } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
+import { optimizeCaptions } from "@/utils/captionPositioning";
 
 interface Caption {
   word: string;
@@ -115,7 +116,10 @@ export const ProEditorWorkspace = () => {
       }
 
       setProgress(80);
-      setCaptions(data.captions);
+      
+      // Optimize captions for better positioning and emphasis
+      const optimizedCaptions = optimizeCaptions(data.captions);
+      setCaptions(optimizedCaptions);
       setProgress(100);
 
       toast({
