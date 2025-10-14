@@ -297,7 +297,7 @@ export const EditorWorkspace = () => {
                         textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
                       }}
                     >
-                      <div className="flex flex-wrap items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                         {visibleWords.map((caption, idx) => {
                           const isCurrentWord = startIndex + idx === currentIndex;
                           return (
