@@ -28,6 +28,7 @@ export const EditorWorkspace = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
   const [captions, setCaptions] = useState<Caption[]>([]);
+  const [editedCaption, setEditedCaption] = useState<Caption | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -223,19 +224,30 @@ export const EditorWorkspace = () => {
 
   const handleWordSelect = (index: number) => {
     setSelectedWordIndex(index);
+    setEditedCaption({ ...captions[index] });
   };
 
   const handleWordUpdate = (updates: Partial<Caption>) => {
-    if (selectedWordIndex === null) return;
+    if (!editedCaption) return;
+    setEditedCaption({ ...editedCaption, ...updates });
+  };
+
+  const saveWordChanges = () => {
+    if (selectedWordIndex === null || !editedCaption) return;
     
     setCaptions(prev => prev.map((caption, index) => 
       index === selectedWordIndex 
-        ? { ...caption, ...updates }
+        ? { ...editedCaption }
         : caption
     ));
+
+    toast({
+      title: "Changes saved!",
+      description: "Your caption edits have been applied",
+    });
   };
 
-  const selectedCaption = selectedWordIndex !== null ? captions[selectedWordIndex] : null;
+  const selectedCaption = editedCaption;
 
   if (!videoFile) {
     return (
@@ -458,15 +470,25 @@ export const EditorWorkspace = () => {
                 />
               </div>
 
-              {/* Download Button */}
-              <div className="md:col-span-2 bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
-                <Button 
-                  onClick={downloadASS} 
-                  className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Download .ASS Captions
-                </Button>
+              {/* Save and Download Buttons */}
+              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                  <Button 
+                    onClick={saveWordChanges} 
+                    className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                  >
+                    💾 Save Changes
+                  </Button>
+                </div>
+                <div className="bg-gradient-purple-blue p-4 rounded-xl border-2 border-primary shadow-glow flex items-center justify-center">
+                  <Button 
+                    onClick={downloadASS} 
+                    className="bg-white text-primary hover:bg-white/90 w-full h-full text-lg font-bebas tracking-wider"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download .ASS
+                  </Button>
+                </div>
               </div>
             </div>
           )}
