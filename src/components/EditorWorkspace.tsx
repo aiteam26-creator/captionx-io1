@@ -202,8 +202,63 @@ export const EditorWorkspace = () => {
     }
   };
 
+  const generateAssContent = (): string => {
+    // ASS file header with style information
+    let assContent = `[Script Info]
+Title: Generated Captions
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1920
+PlayResY: 1080
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+
+    // Convert captions to ASS dialogue lines with styling
+    captions.forEach((caption) => {
+      const start = formatAssTime(caption.start);
+      const end = formatAssTime(caption.end);
+      const fontName = caption.fontFamily || 'Arial';
+      const fontSize = caption.fontSize || 48;
+      const color = hexToAssColor(caption.color || '#ffffff');
+      
+      // ASS positioning: \pos(x,y) where x,y are in pixels
+      const posX = caption.positionX ? Math.round((caption.positionX / 100) * 1920) : 960;
+      const posY = caption.positionY ? Math.round((caption.positionY / 100) * 1080) : 900;
+      
+      // ASS override tags for styling
+      const styleTag = `{\\fn${fontName}\\fs${fontSize}\\c${color}\\pos(${posX},${posY})}`;
+      
+      assContent += `Dialogue: 0,${start},${end},Default,,0,0,0,,${styleTag}${caption.word}\n`;
+    });
+
+    return assContent;
+  };
+
+  const formatAssTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const centiseconds = Math.floor((seconds % 1) * 100);
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
+  };
+
+  const hexToAssColor = (hex: string): string => {
+    // Convert #RRGGBB to &H00BBGGRR (ASS format)
+    const r = hex.slice(1, 3);
+    const g = hex.slice(3, 5);
+    const b = hex.slice(5, 7);
+    return `&H00${b}${g}${r}`.toUpperCase();
+  };
+
   const downloadAssFile = () => {
-    if (!assContent) {
+    if (captions.length === 0) {
       toast({
         title: "No captions available",
         description: "Please transcribe a video first to generate captions.",
@@ -212,19 +267,20 @@ export const EditorWorkspace = () => {
       return;
     }
 
-    const blob = new Blob([assContent], { type: 'text/plain' });
+    const generatedAssContent = generateAssContent();
+    const blob = new Blob([generatedAssContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'captions.ass';
+    a.download = 'captions-styled.ass';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
     toast({
-      title: "ASS file downloaded!",
-      description: "You can use this file with video players or editing software.",
+      title: "Styled ASS file downloaded!",
+      description: "Your subtitle file includes all typography edits (fonts, colors, sizes, positions).",
     });
   };
 
