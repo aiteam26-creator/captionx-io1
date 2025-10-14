@@ -272,58 +272,97 @@ export const EditorWorkspace = () => {
         <div className="space-y-6 animate-slide-up">
           {videoUrl && (
             <div className="relative w-full bg-white/60 backdrop-blur-sm p-4 rounded-2xl border-2 border-primary shadow-glow">
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className="w-full rounded-lg"
-                controls
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-              />
-              {/* Caption overlay on video */}
-              {(() => {
-                const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
-                if (currentIndex === -1) return null;
+              <div 
+                className="relative cursor-crosshair"
+                onClick={(e) => {
+                  if (selectedWordIndex === null) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  handleWordUpdate({ positionX: Math.round(x), positionY: Math.round(y) });
+                }}
+              >
+                <video
+                  ref={videoRef}
+                  src={videoUrl}
+                  className="w-full rounded-lg"
+                  controls
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                />
                 
-                const startIndex = Math.max(0, currentIndex - 2);
-                const endIndex = Math.min(captions.length, currentIndex + 3);
-                const visibleWords = captions.slice(startIndex, endIndex);
-                const currentCaption = captions[currentIndex];
-                
-                return (
+                {/* Caption overlay - show all words when not editing position */}
+                {selectedWordIndex === null && (() => {
+                  const currentIndex = captions.findIndex(c => currentTime >= c.start && currentTime <= c.end);
+                  if (currentIndex === -1) return null;
+                  
+                  const startIndex = Math.max(0, currentIndex - 2);
+                  const endIndex = Math.min(captions.length, currentIndex + 3);
+                  const visibleWords = captions.slice(startIndex, endIndex);
+                  const currentCaption = captions[currentIndex];
+                  
+                  return (
+                    <div 
+                      className="absolute pointer-events-none"
+                      style={{
+                        left: `${currentCaption.positionX || 50}%`,
+                        top: `${currentCaption.positionY || 80}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+                        {visibleWords.map((caption, idx) => {
+                          const isCurrentWord = startIndex + idx === currentIndex;
+                          return (
+                            <span
+                              key={startIndex + idx}
+                              style={{
+                                fontFamily: caption.fontFamily || "Inter",
+                                fontSize: `${caption.fontSize || 32}px`,
+                                color: caption.color || "#ffffff",
+                                fontWeight: caption.isKeyword ? "bold" : "normal",
+                                textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
+                                padding: isCurrentWord ? "4px 12px" : "0",
+                                borderRadius: isCurrentWord ? "8px" : "0",
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              {caption.word}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Selected word preview - draggable box */}
+                {selectedWordIndex !== null && selectedCaption && (
                   <div 
                     className="absolute pointer-events-none"
                     style={{
-                      left: `${currentCaption.positionX || 50}%`,
-                      top: `${currentCaption.positionY || 80}%`,
+                      left: `${selectedCaption.positionX || 50}%`,
+                      top: `${selectedCaption.positionY || 80}%`,
                       transform: 'translate(-50%, -50%)',
                     }}
                   >
-                    <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-                      {visibleWords.map((caption, idx) => {
-                        const isCurrentWord = startIndex + idx === currentIndex;
-                        return (
-                          <span
-                            key={startIndex + idx}
-                            style={{
-                              fontFamily: caption.fontFamily || "Inter",
-                              fontSize: `${caption.fontSize || 32}px`,
-                              color: caption.color || "#ffffff",
-                              fontWeight: caption.isKeyword ? "bold" : "normal",
-                              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-                              backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
-                              padding: isCurrentWord ? "4px 12px" : "0",
-                              borderRadius: isCurrentWord ? "8px" : "0",
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            {caption.word}
-                          </span>
-                        );
-                      })}
+                    <div 
+                      className="relative border-4 border-dashed border-primary bg-primary/10 backdrop-blur-sm rounded-lg p-3 animate-pulse"
+                      style={{
+                        fontFamily: selectedCaption.fontFamily || "Inter",
+                        fontSize: `${selectedCaption.fontSize || 32}px`,
+                        color: selectedCaption.color || "#ffffff",
+                        textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+                      }}
+                    >
+                      {selectedCaption.word}
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-primary text-white text-xs px-2 py-1 rounded">
+                        Click to position
+                      </div>
                     </div>
                   </div>
-                );
-              })()}
+                )}
+              </div>
             </div>
           )}
 
