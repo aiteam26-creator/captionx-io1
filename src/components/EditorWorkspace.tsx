@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
 interface Caption {
   word: string;
   start: number;
@@ -408,22 +408,25 @@ export const EditorWorkspace = () => {
               <div className="flex gap-4 items-end">
                 <div className="flex-1">
                   <Label className="font-bebas text-lg text-white mb-2 block">Select Font</Label>
-                  <select
-                    value={globalFont}
-                    onChange={(e) => setGlobalFont(e.target.value)}
-                    className="w-full p-3 rounded-lg border-2 border-white/50 bg-white text-lg"
-                  >
-                    {[
-                      "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
-                      "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
-                      "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
-                      "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
-                      "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
-                      "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
-                    ].map(font => (
-                      <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                    ))}
-                  </select>
+                  <Select value={globalFont} onValueChange={setGlobalFont}>
+                    <SelectTrigger className="w-full p-3 rounded-lg border-2 border-white/50 bg-white text-lg" style={{ fontFamily: globalFont }}>
+                      <SelectValue placeholder="Select font" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      {[
+                        "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
+                        "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
+                        "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
+                        "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
+                        "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
+                        "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
+                      ].map((font) => (
+                        <SelectItem key={font} value={font}>
+                          <span style={{ fontFamily: font }}>{font}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button 
                   onClick={applyFontToAll}
@@ -452,22 +455,25 @@ export const EditorWorkspace = () => {
               {/* Font Selector */}
               <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border-2 border-primary/30 shadow-glow">
                 <Label className="font-bebas text-lg text-primary mb-2 block">Font 🎨</Label>
-                <select
-                  value={selectedCaption.fontFamily || "Inter"}
-                  onChange={(e) => handleWordUpdate({ fontFamily: e.target.value })}
-                  className="w-full p-2 rounded-lg border border-primary/50 bg-white"
-                >
-                  {[
-                    "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
-                    "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
-                    "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
-                    "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
-                    "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
-                    "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
-                  ].map(font => (
-                    <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-                  ))}
-                </select>
+                <Select value={selectedCaption.fontFamily || "Inter"} onValueChange={(v) => handleWordUpdate({ fontFamily: v })}>
+                  <SelectTrigger className="w-full p-2 rounded-lg border border-primary/50 bg-white" style={{ fontFamily: selectedCaption.fontFamily || "Inter" }}>
+                    <SelectValue placeholder="Select font" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50">
+                    {[
+                      "Inter", "Bebas Neue", "Poppins", "Bungee", "Permanent Marker", "Bangers", 
+                      "Righteous", "Audiowide", "Black Ops One", "Fredoka One",
+                      "Pacifico", "Dancing Script", "Great Vibes", "Sacramento", "Satisfy",
+                      "Caveat", "Kaushan Script", "Lobster", "Cookie", "Courgette",
+                      "Amatic SC", "Indie Flower", "Shadows Into Light", "Patrick Hand", "Reenie Beanie",
+                      "Rock Salt", "Covered By Your Grace", "Homemade Apple", "Architects Daughter", "Waiting for the Sunrise"
+                    ].map((font) => (
+                      <SelectItem key={font} value={font}>
+                        <span style={{ fontFamily: font }}>{font}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Font Size */}
