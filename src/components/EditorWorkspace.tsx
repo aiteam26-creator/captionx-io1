@@ -158,13 +158,24 @@ export const EditorWorkspace = () => {
         description: "Using AI to transcribe your video",
       });
 
+      console.log('Calling transcribe-video function...');
       const { data, error } = await supabase.functions.invoke('transcribe-video', {
         body: { audioBase64 }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data || !data.captions) {
+        throw new Error('No captions returned from API');
+      }
 
       setProgress(80);
+      console.log('Received captions:', data.captions.length);
       setCaptions(data.captions);
       setAssContent(data.assContent);
       setProgress(100);
