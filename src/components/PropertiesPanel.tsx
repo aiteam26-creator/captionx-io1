@@ -39,9 +39,9 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
 
   if (!caption) {
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center space-y-3 opacity-60">
-          <Type className="w-10 h-10 mx-auto text-muted-foreground" strokeWidth={1.5} />
+      <div className="h-full flex items-center justify-center p-10">
+        <div className="text-center space-y-4 opacity-60">
+          <Type className="w-12 h-12 mx-auto text-muted-foreground" strokeWidth={1.5} />
           <p className="text-sm text-muted-foreground font-medium">
             Select a caption to edit
           </p>
@@ -52,38 +52,38 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-5 space-y-5">
+      <div className="space-y-6">
         
         {/* Typography Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Type className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <Type className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Typography</span>
           </div>
           
           {/* Caption Text */}
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Text</Label>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Text</Label>
             <Input
               value={caption.word}
               onChange={(e) => onUpdate({ word: e.target.value })}
-              className="h-9 text-sm border-border/60 focus:border-foreground transition-colors bg-background hover:bg-accent/30"
+              className="h-10 text-sm border-border/60 focus:border-foreground transition-colors bg-background hover:bg-accent/30"
               placeholder="Enter caption text"
             />
           </div>
 
           {/* Font Selector with Live Preview */}
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Font</Label>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Font</Label>
             <div className="relative">
               <button
                 onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
-                className="w-full h-9 px-3 flex items-center justify-between text-sm border border-border/60 rounded-md bg-background hover:bg-accent/30 hover:border-foreground transition-all"
+                className="w-full h-10 px-4 flex items-center justify-between text-sm border border-border/60 rounded-md bg-background hover:bg-accent/30 hover:border-foreground transition-all"
               >
                 <span style={{ fontFamily: caption.fontFamily || "Inter" }} className="truncate">
                   {caption.fontFamily || "Inter"}
                 </span>
-                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform", fontDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", fontDropdownOpen && "rotate-180")} />
               </button>
               
               {fontDropdownOpen && (
@@ -98,14 +98,14 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                           setFontDropdownOpen(false);
                         }}
                         className={cn(
-                          "w-full px-3 py-2.5 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between group",
+                          "w-full px-4 py-3 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between group",
                           caption.fontFamily === font && "bg-accent/50"
                         )}
                         style={{ fontFamily: font }}
                       >
                         <span className="truncate">{font}</span>
                         {caption.fontFamily === font && (
-                          <Check className="w-3.5 h-3.5 text-foreground" strokeWidth={2.5} />
+                          <Check className="w-4 h-4 text-foreground" strokeWidth={2.5} />
                         )}
                       </button>
                     ))}
@@ -116,10 +116,10 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
           </div>
 
           {/* Font Size Slider */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Size</Label>
-              <span className="text-xs font-mono text-foreground bg-accent/50 px-2 py-0.5 rounded">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Size</Label>
+              <span className="text-xs font-mono text-foreground bg-accent/50 px-2.5 py-1 rounded">
                 {caption.fontSize || 32}px
               </span>
             </div>
@@ -129,7 +129,7 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
               step={1}
               value={[caption.fontSize || 32]}
               onValueChange={(value) => onUpdate({ fontSize: value[0] })}
-              className="py-3"
+              className="py-4"
             />
           </div>
         </div>
@@ -138,24 +138,24 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
         <div className="h-px bg-border/50" />
 
         {/* Colors Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <Palette className="w-4 h-4 text-muted-foreground" strokeWidth={2} />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Colors</span>
           </div>
 
           {/* Text Color */}
-          <div className="space-y-2">
-            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Text Color</Label>
+          <div className="space-y-2.5">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Text Color</Label>
             
             {/* Color Swatches */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {COLOR_SWATCHES.map((swatch) => (
                 <button
                   key={swatch}
                   onClick={() => onUpdate({ color: swatch })}
                   className={cn(
-                    "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative group",
+                    "w-8 h-8 rounded-md border-2 transition-all hover:scale-110 relative group",
                     caption.color?.toUpperCase() === swatch 
                       ? "border-foreground shadow-md scale-105" 
                       : "border-border/40 hover:border-foreground/40"
@@ -165,7 +165,7 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 >
                   {caption.color?.toUpperCase() === swatch && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                      <Check className="w-3.5 h-3.5 text-white drop-shadow-md" strokeWidth={3} />
                     </div>
                   )}
                 </button>
@@ -178,28 +178,28 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 type="color"
                 value={caption.color || "#ffffff"}
                 onChange={(e) => onUpdate({ color: e.target.value })}
-                className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
+                className="h-9 w-14 p-1 cursor-pointer border-border/60"
               />
               <Input
                 value={caption.color || "#ffffff"}
                 onChange={(e) => onUpdate({ color: e.target.value })}
-                className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
+                className="h-9 flex-1 font-mono text-xs border-border/60 focus:border-foreground transition-colors bg-background"
                 placeholder="#ffffff"
               />
             </div>
           </div>
 
           {/* Background Color */}
-          <div className="space-y-2">
-            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Background</Label>
+          <div className="space-y-2.5">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</Label>
             
             {/* Background Swatches */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {/* Transparent Option */}
               <button
                 onClick={() => onUpdate({ backgroundColor: "transparent" })}
                 className={cn(
-                  "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative",
+                  "w-8 h-8 rounded-md border-2 transition-all hover:scale-110 relative",
                   !caption.backgroundColor || caption.backgroundColor === "transparent"
                     ? "border-foreground shadow-md scale-105"
                     : "border-border/40 hover:border-foreground/40"
@@ -211,7 +211,7 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
               >
                 {(!caption.backgroundColor || caption.backgroundColor === "transparent") && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-foreground drop-shadow-md" strokeWidth={3} />
+                    <Check className="w-3.5 h-3.5 text-foreground drop-shadow-md" strokeWidth={3} />
                   </div>
                 )}
               </button>
@@ -221,7 +221,7 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                   key={swatch}
                   onClick={() => onUpdate({ backgroundColor: swatch + "E6" })}
                   className={cn(
-                    "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative",
+                    "w-8 h-8 rounded-md border-2 transition-all hover:scale-110 relative",
                     caption.backgroundColor?.slice(0, 7).toUpperCase() === swatch
                       ? "border-foreground shadow-md scale-105"
                       : "border-border/40 hover:border-foreground/40"
@@ -231,7 +231,7 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 >
                   {caption.backgroundColor?.slice(0, 7).toUpperCase() === swatch && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                      <Check className="w-3.5 h-3.5 text-white drop-shadow-md" strokeWidth={3} />
                     </div>
                   )}
                 </button>
@@ -244,12 +244,12 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 type="color"
                 value={caption.backgroundColor?.slice(0, 7) || "#000000"}
                 onChange={(e) => onUpdate({ backgroundColor: e.target.value + "E6" })}
-                className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
+                className="h-9 w-14 p-1 cursor-pointer border-border/60"
               />
               <Input
                 value={caption.backgroundColor || "transparent"}
                 onChange={(e) => onUpdate({ backgroundColor: e.target.value })}
-                className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
+                className="h-9 flex-1 font-mono text-xs border-border/60 focus:border-foreground transition-colors bg-background"
                 placeholder="transparent"
               />
             </div>
@@ -260,9 +260,9 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
         <div className="h-px bg-border/50" />
 
         {/* Position Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} fill="none" viewBox="0 0 24 24">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <svg className="w-4 h-4 text-muted-foreground" strokeWidth={2} fill="none" viewBox="0 0 24 24">
               <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5" />
             </svg>
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Position</span>

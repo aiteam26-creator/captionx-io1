@@ -509,11 +509,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         </div>
 
         {/* Right sidebar: Properties panel */}
-        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
-          <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
+        <div className="w-96 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
+          <div className="h-14 border-b border-border flex items-center px-8 sticky top-0 bg-background z-10">
             <h2 className="text-sm font-semibold">Settings</h2>
           </div>
-          <div className="p-4 space-y-6">
+          <div className="p-6 space-y-8">
             {/* Global Settings */}
             <GlobalCaptionSettings
               captions={captions}
