@@ -83,21 +83,71 @@ serve(async (req) => {
   }
 
   try {
-    const { audioBase64 } = await req.json();
+    const { videoPath } = await req.json();
     
-    if (!audioBase64) {
-      throw new Error('No audio data provided');
+    if (!videoPath) {
+      throw new Error('No video path provided');
     }
 
-    console.log('Processing audio for transcription...');
+    console.log('Downloading video from storage:', videoPath);
 
-    // Process audio in chunks
-    const binaryAudio = processBase64Chunks(audioBase64);
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Download video from storage
+    const { data: videoData, error: downloadError } = await supabase.storage
+      .from('videos')
+      .download(videoPath);
+
+    if (downloadError || !videoData) {
+      throw new Error(`Failed to download video: ${downloadError?.message}`);
+    }
+
+    console.log('Video downloaded, extracting audio...');
+
+    // Convert video blob to array buffer
+    const videoBuffer = await videoData.arrayBuffer();
+    
+    // Use FFmpeg to extract audio (Deno edge functions support FFmpeg)
+    const tempVideoPath = `/tmp/input-${Date.now()}.mp4`;
+    const tempAudioPath = `/tmp/audio-${Date.now()}.mp3`;
+    
+    await Deno.writeFile(tempVideoPath, new Uint8Array(videoBuffer));
+    
+    // Extract audio using FFmpeg
+    const ffmpegCommand = new Deno.Command("ffmpeg", {
+      args: [
+        "-i", tempVideoPath,
+        "-vn",
+        "-acodec", "libmp3lame",
+        "-ar", "16000",
+        "-ac", "1",
+        "-b:a", "64k",
+        tempAudioPath
+      ],
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const { code, stderr } = await ffmpegCommand.output();
+    
+    if (code !== 0) {
+      const errorString = new TextDecoder().decode(stderr);
+      console.error('FFmpeg error:', errorString);
+      throw new Error('Failed to extract audio from video');
+    }
+
+    console.log('Audio extracted, preparing for transcription...');
+
+    // Read extracted audio
+    const audioBuffer = await Deno.readFile(tempAudioPath);
     
     // Prepare form data for Whisper
     const formData = new FormData();
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+    formData.append('file', audioBlob, 'audio.mp3');
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
     formData.append('timestamp_granularities[]', 'word');
@@ -122,7 +172,15 @@ serve(async (req) => {
     const result = await response.json();
     console.log('Transcription completed with word-level timestamps');
 
-    // Parse word-level captions with accurate timestamps
+    // Clean up temp files
+    try {
+      await Deno.remove(tempVideoPath);
+      await Deno.remove(tempAudioPath);
+    } catch (e) {
+      console.log('Cleanup error (non-critical):', e);
+    }
+
+    // Parse word-level captions
     const captions: Array<{
       word: string;
       start: number;
@@ -147,7 +205,7 @@ serve(async (req) => {
       });
     }
 
-    // Generate ASS caption file from word-level captions
+    // Generate ASS caption file
     const assSegments = captions.map(cap => ({
       text: cap.word,
       start: cap.start,

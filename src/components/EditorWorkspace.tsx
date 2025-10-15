@@ -42,139 +42,53 @@ export const EditorWorkspace = () => {
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
     
-    // Start transcription
-    await transcribeVideo(file);
+    // Upload video to storage and start transcription
+    await uploadAndTranscribeVideo(file);
   };
 
-  const extractAudio = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const audioContext = new AudioContext();
-      const reader = new FileReader();
-
-      reader.onload = async (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-          
-          // Convert to WAV format
-          const offlineContext = new OfflineAudioContext(
-            audioBuffer.numberOfChannels,
-            audioBuffer.length,
-            audioBuffer.sampleRate
-          );
-          
-          const source = offlineContext.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(offlineContext.destination);
-          source.start();
-          
-          const renderedBuffer = await offlineContext.startRendering();
-          
-          // Convert to base64 using chunks to avoid stack overflow
-          const wav = audioBufferToWav(renderedBuffer);
-          const base64 = arrayBufferToBase64(wav);
-          resolve(base64);
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-  };
-
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    const chunkSize = 0x8000; // Process in 32KB chunks
-    let binary = '';
-    
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
-    }
-    
-    return btoa(binary);
-  };
-
-  const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
-    const length = buffer.length * buffer.numberOfChannels * 2 + 44;
-    const arrayBuffer = new ArrayBuffer(length);
-    const view = new DataView(arrayBuffer);
-    const channels = [];
-    let offset = 0;
-    let pos = 0;
-
-    // Write WAV header
-    const setUint16 = (data: number) => {
-      view.setUint16(pos, data, true);
-      pos += 2;
-    };
-    const setUint32 = (data: number) => {
-      view.setUint32(pos, data, true);
-      pos += 4;
-    };
-
-    setUint32(0x46464952); // "RIFF"
-    setUint32(length - 8);
-    setUint32(0x45564157); // "WAVE"
-    setUint32(0x20746d66); // "fmt "
-    setUint32(16);
-    setUint16(1);
-    setUint16(buffer.numberOfChannels);
-    setUint32(buffer.sampleRate);
-    setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels);
-    setUint16(buffer.numberOfChannels * 2);
-    setUint16(16);
-    setUint32(0x61746164); // "data"
-    setUint32(length - pos - 4);
-
-    // Write interleaved data
-    for (let i = 0; i < buffer.numberOfChannels; i++) {
-      channels.push(buffer.getChannelData(i));
-    }
-
-    while (pos < length) {
-      for (let i = 0; i < buffer.numberOfChannels; i++) {
-        const sample = Math.max(-1, Math.min(1, channels[i][offset]));
-        view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-        pos += 2;
-      }
-      offset++;
-    }
-
-    return arrayBuffer;
-  };
-
-  const transcribeVideo = async (file: File) => {
+  const uploadAndTranscribeVideo = async (file: File) => {
     setIsProcessing(true);
-    setProgress(10);
+    setProgress(5);
 
     try {
       toast({
-        title: "Extracting audio...",
-        description: "Processing your video file",
-        duration: 300000, // 5 minutes - keeps toast visible
+        title: "Uploading video...",
+        description: "Uploading your video to the cloud",
+        duration: 300000,
       });
 
-      const audioBase64 = await extractAudio(file);
-      setProgress(30);
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      setProgress(20);
 
       toast({
-        title: "Generating captions...",
-        description: "Using AI to transcribe your video",
-        duration: 300000, // 5 minutes - keeps toast visible
+        title: "Processing video...",
+        description: "Extracting audio and generating captions with AI",
+        duration: 300000,
       });
 
-      console.log('Calling transcribe-video function...');
+      // Call edge function with storage path
       const { data, error } = await supabase.functions.invoke('transcribe-video', {
-        body: { audioBase64 }
+        body: { videoPath: filePath }
       });
-
-      console.log('Function response:', { data, error });
 
       if (error) {
-        console.error('Supabase function error:', error);
+        console.error('Transcription error:', error);
         throw error;
       }
 
@@ -182,22 +96,27 @@ export const EditorWorkspace = () => {
         throw new Error('No captions returned from API');
       }
 
-      setProgress(80);
+      setProgress(90);
       console.log('Received captions:', data.captions.length);
       setCaptions(data.captions);
       setAssContent(data.assContent);
       setProgress(100);
+      setIsProcessing(false);
 
       toast({
         title: "Success!",
         description: "Captions generated successfully. Ready to download!",
         duration: 3000,
       });
+
+      // Clean up uploaded file
+      await supabase.storage.from('videos').remove([filePath]);
+      
     } catch (error) {
-      console.error('Error transcribing video:', error);
+      console.error('Error processing video:', error);
       toast({
         title: "Error",
-        description: "Failed to generate captions. Please try again.",
+        description: "Failed to process video. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
