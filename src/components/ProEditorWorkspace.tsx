@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { VideoUpload } from "./VideoUpload";
 import { VideoEditorCanvas } from "./VideoEditorCanvas";
 import { CleanTimeline } from "./CleanTimeline";
@@ -149,11 +149,11 @@ export const ProEditorWorkspace = () => {
     }
   };
 
-  const handleCaptionDrag = (index: number, x: number, y: number) => {
+  const handleCaptionDrag = useCallback((index: number, x: number, y: number) => {
     setCaptions(prev => prev.map((caption, i) => 
       i === index ? { ...caption, positionX: x, positionY: y } : caption
     ));
-  };
+  }, []);
 
   const handleCaptionClick = (index: number) => {
     setSelectedWordIndex(index);

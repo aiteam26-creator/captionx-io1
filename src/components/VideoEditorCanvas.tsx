@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Move, Edit3 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -41,6 +41,8 @@ export const VideoEditorCanvas = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const rafRef = useRef<number | null>(null);
+  const lastPositionRef = useRef({ x: 0, y: 0 });
 
   const getCurrentCaptions = () => {
     return captions
@@ -48,7 +50,7 @@ export const VideoEditorCanvas = ({
       .filter(({ caption }) => currentTime >= caption.start && currentTime <= caption.end);
   };
 
-  const handleMouseDown = (e: React.MouseEvent, index: number) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     if (e.button !== 0) return;
 
@@ -68,33 +70,61 @@ export const VideoEditorCanvas = ({
     
     setDragging(index);
     onCaptionClick(index);
-  };
+    
+    // Store initial position
+    lastPositionRef.current = { x: e.clientX, y: e.clientY };
+  }, [captions, onCaptionClick]);
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (dragging === null || !containerRef.current) return;
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
-    const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+    // Cancel any pending animation frame
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+    }
 
-    onCaptionDrag(dragging, Math.max(0, Math.min(100, x)), Math.max(0, Math.min(100, y)));
-  };
+    // Use requestAnimationFrame for smooth updates
+    rafRef.current = requestAnimationFrame(() => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
 
-  const handleMouseUp = () => {
+      const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
+      const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+
+      const clampedX = Math.max(0, Math.min(100, x));
+      const clampedY = Math.max(0, Math.min(100, y));
+
+      // Only update if position actually changed
+      if (lastPositionRef.current.x !== e.clientX || lastPositionRef.current.y !== e.clientY) {
+        onCaptionDrag(dragging, clampedX, clampedY);
+        lastPositionRef.current = { x: e.clientX, y: e.clientY };
+      }
+    });
+  }, [dragging, dragOffset, onCaptionDrag]);
+
+  const handleMouseUp = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setDragging(null);
-  };
+  }, []);
 
   useEffect(() => {
     if (dragging !== null) {
-      document.addEventListener("mousemove", handleMouseMove);
+      // Use passive event listeners for better performance
+      document.addEventListener("mousemove", handleMouseMove, { passive: true });
       document.addEventListener("mouseup", handleMouseUp);
 
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+        }
       };
     }
-  }, [dragging]);
+  }, [dragging, handleMouseMove, handleMouseUp]);
 
   const handleDoubleClick = (index: number, word: string) => {
     setEditingIndex(index);
@@ -129,14 +159,14 @@ export const VideoEditorCanvas = ({
               <TooltipTrigger asChild>
                 <div
                   className={`
-                    absolute cursor-move select-none transition-all duration-150
+                    absolute cursor-move select-none
                     ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-black/50' : ''}
-                    ${isDragging ? 'scale-110 opacity-80' : 'hover:scale-105'}
+                    ${isDragging ? 'scale-110 opacity-80 will-change-transform' : 'hover:scale-105 transition-transform'}
                   `}
                   style={{
                     left: `${caption.positionX || 50}%`,
                     top: `${caption.positionY || 80}%`,
-                    transform: 'translate(-50%, -50%)',
+                    transform: 'translate(-50%, -50%) translateZ(0)',
                     zIndex: isSelected ? 50 : 40,
                   }}
                   onMouseDown={(e) => handleMouseDown(e, index)}
