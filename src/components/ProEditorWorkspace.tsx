@@ -53,26 +53,58 @@ export const ProEditorWorkspace = () => {
     await transcribeVideo(file);
   };
 
+  const extractAudio = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      
+      video.onloadedmetadata = () => {
+        const canvas = document.createElement('canvas');
+        const context = new AudioContext();
+        const source = context.createMediaElementSource(video);
+        const dest = context.createMediaStreamDestination();
+        
+        source.connect(dest);
+        
+        const mediaRecorder = new MediaRecorder(dest.stream);
+        const chunks: Blob[] = [];
+        
+        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+        };
+        
+        video.play();
+        mediaRecorder.start();
+        
+        setTimeout(() => {
+          video.pause();
+          mediaRecorder.stop();
+          source.disconnect();
+        }, video.duration * 1000);
+      };
+      
+      video.onerror = reject;
+    });
+  };
+
   const transcribeVideo = async (file: File) => {
     setIsProcessing(true);
     setProgress(10);
 
     try {
       toast({
-        title: "Uploading video...",
-        description: "Preparing your video for transcription",
+        title: "Extracting audio...",
+        description: "Processing your video file",
       });
 
-      // Upload video to storage
-      const ext = file.name.split('.').pop() || 'mp4';
-      const videoPath = `transcribe/video-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('videos')
-        .upload(videoPath, file, { cacheControl: '3600' });
-
-      if (uploadError) throw uploadError;
-
+      const audioBase64 = await extractAudio(file);
       setProgress(30);
 
       toast({
@@ -82,7 +114,7 @@ export const ProEditorWorkspace = () => {
       });
 
       const { data, error } = await supabase.functions.invoke('transcribe-video', {
-        body: { videoPath }
+        body: { audioBase64 }
       });
 
       if (error) throw error;
@@ -204,20 +236,17 @@ export const ProEditorWorkspace = () => {
   };
 
   const generateAssContent = (): string => {
-    const vw = videoRef.current?.videoWidth || 1920;
-    const vh = videoRef.current?.videoHeight || 1080;
-
     const assHeader = `[Script Info]
 Title: Generated Captions
 ScriptType: v4.00+
 WrapStyle: 0
-PlayResX: ${vw}
-PlayResY: ${vh}
+PlayResX: 1920
+PlayResY: 1080
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${captions[0]?.fontFamily || 'Inter'},${captions[0]?.fontSize || 48},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+Style: Default,${captions[0]?.fontFamily || 'Inter'},${captions[0]?.fontSize || 32},&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -231,23 +260,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centisecs).padStart(2, '0')}`;
     };
 
-    const hexToAssColor = (hex: string): string => {
-      const r = hex.slice(1, 3);
-      const g = hex.slice(3, 5);
-      const b = hex.slice(5, 7);
-      return `&H00${b}${g}${r}`.toUpperCase();
-    };
-
     const events = captions.map((caption) => {
       const start = formatAssTime(caption.start);
       const end = formatAssTime(caption.end);
-      const font = caption.fontFamily || 'Inter';
-      const size = caption.fontSize || 48;
-      const color = hexToAssColor((caption.color || '#FFFFFF').toUpperCase());
-      const posX = Math.round(((caption.positionX ?? 50) / 100) * vw);
-      const posY = Math.round(((caption.positionY ?? 85) / 100) * vh);
-      const style = `{\\fn${font}\\fs${size}\\c${color}\\pos(${posX},${posY})}`;
-      return `Dialogue: 0,${start},${end},Default,,0,0,0,,${style}${caption.word}`;
+      return `Dialogue: 0,${start},${end},Default,,0,0,0,,${caption.word}`;
     }).join('\n');
 
     return assHeader + events;
@@ -275,54 +291,128 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     if (!videoRef.current || !videoFile) return;
 
     setIsExporting(true);
-    setExportProgress(5);
+    setExportProgress(0);
 
-    try {
-      // 1) Generate ASS with exact styling/positions
-      const assContent = generateAssContent();
+    toast({
+      title: "Starting export...",
+      description: "This may take a moment",
+    });
 
-      // 2) Upload source video to storage (fast path if already uploaded could be added)
-      const ext = videoFile.name.split('.').pop() || 'mp4';
-      const srcPath = `exports/src-${Date.now()}.${ext}`;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      const { error: upErr } = await supabase.storage
-        .from('videos')
-        .upload(srcPath, videoFile, { cacheControl: '3600' });
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-      if (upErr) throw upErr;
-      setExportProgress(35);
+    // Capture video stream from canvas
+    const canvasStream = canvas.captureStream(30);
+    
+    // Get audio track from the original video
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaElementSource(video);
+    const destination = audioContext.createMediaStreamDestination();
+    source.connect(destination);
+    source.connect(audioContext.destination);
+    
+    // Combine video and audio tracks
+    const videoTrack = canvasStream.getVideoTracks()[0];
+    const audioTrack = destination.stream.getAudioTracks()[0];
+    const combinedStream = new MediaStream([videoTrack, audioTrack]);
+    
+    const mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: 'video/webm;codecs=vp9,opus',
+      videoBitsPerSecond: 8000000,
+    });
 
-      // 3) Call backend renderer (FFmpeg) to burn captions and keep audio in sync
-      const { data, error } = await supabase.functions.invoke('render-video', {
-        body: {
-          videoPath: srcPath,
-          assContent,
-          format: 'mp4',
-          crf: 18,
-          preset: 'veryfast',
-        },
-      });
-
-      if (error) throw error;
-      if (!data?.url) throw new Error('No rendered URL returned');
-      setExportProgress(90);
-
-      // 4) Download the processed video
+    const chunks: Blob[] = [];
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = data.url;
-      a.download = `video-with-captions.mp4`;
+      a.href = url;
+      a.download = 'video-with-captions.webm';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-      setExportProgress(100);
-      toast({ title: 'Export complete', description: 'Your video is downloading.' });
-    } catch (e: any) {
-      console.error('Export failed', e);
-      toast({ title: 'Export failed', description: e.message || 'Please try again.', variant: 'destructive' });
-    } finally {
-      setIsExporting(false);
-    }
+      toast({
+        title: "Success! 🎉",
+        description: "Your video with burned-in captions is downloading",
+      });
+    };
+
+    video.currentTime = 0;
+    await new Promise(resolve => {
+      video.onseeked = resolve;
+    });
+
+    mediaRecorder.start();
+    video.play();
+
+    const drawFrame = () => {
+      const currentTime = video.currentTime;
+      const progress = (currentTime / video.duration) * 100;
+      setExportProgress(Math.min(progress, 99));
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const activeCaptions = captions.filter(
+        caption => currentTime >= caption.start && currentTime <= caption.end
+      );
+
+      activeCaptions.forEach((caption) => {
+        // Scale font size based on video height to ensure visibility
+        const baseFontSize = caption.fontSize || 32;
+        const scaledFontSize = Math.max(baseFontSize, canvas.height * 0.05); // At least 5% of video height
+        const fontFamily = caption.fontFamily || 'Inter';
+        const color = caption.color || '#ffffff';
+        const bgColor = caption.backgroundColor || 'transparent';
+        
+        ctx.font = `bold ${scaledFontSize}px ${fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const x = (caption.positionX || 50) * canvas.width / 100;
+        const y = (caption.positionY || 85) * canvas.height / 100;
+
+        if (bgColor !== 'transparent') {
+          const metrics = ctx.measureText(caption.word);
+          const padding = scaledFontSize * 0.3;
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(
+            x - metrics.width / 2 - padding,
+            y - scaledFontSize / 2 - padding,
+            metrics.width + padding * 2,
+            scaledFontSize + padding * 2
+          );
+        }
+
+        // Add text stroke for better readability
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = scaledFontSize * 0.08;
+        ctx.strokeText(caption.word, x, y);
+        
+        ctx.fillStyle = color;
+        ctx.fillText(caption.word, x, y);
+      });
+
+      if (currentTime < video.duration) {
+        requestAnimationFrame(drawFrame);
+      } else {
+        setExportProgress(100);
+        mediaRecorder.stop();
+        video.pause();
+        audioContext.close();
+        setIsExporting(false);
+      }
+    };
+
+    drawFrame();
   };
 
   const formatSRTTime = (seconds: number): string => {
@@ -419,11 +509,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         </div>
 
         {/* Right sidebar: Properties panel */}
-        <div className="w-96 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
-          <div className="h-14 border-b border-border flex items-center px-8 sticky top-0 bg-background z-10">
+        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
+          <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
             <h2 className="text-sm font-semibold">Settings</h2>
           </div>
-          <div className="p-6 space-y-8">
+          <div className="p-4 space-y-6">
             {/* Global Settings */}
             <GlobalCaptionSettings
               captions={captions}

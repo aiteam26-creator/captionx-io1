@@ -148,13 +148,13 @@ export const VideoEditorCanvas = ({
       />
 
       {/* Caption overlays */}
-      {getCurrentCaptions().map(({ caption, index: originalIndex }) => {
-        const isSelected = selectedWordIndex === originalIndex;
-        const isDragging = dragging === originalIndex;
-        const isEditing = editingIndex === originalIndex;
+      {getCurrentCaptions().map(({ caption, index }) => {
+        const isSelected = selectedWordIndex === index;
+        const isDragging = dragging === index;
+        const isEditing = editingIndex === index;
 
         return (
-          <TooltipProvider key={originalIndex}>
+          <TooltipProvider key={index}>
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
                 <div
@@ -169,8 +169,8 @@ export const VideoEditorCanvas = ({
                     transform: 'translate(-50%, -50%) translateZ(0)',
                     zIndex: isSelected ? 50 : 40,
                   }}
-                  onMouseDown={(e) => handleMouseDown(e, originalIndex)}
-                  onDoubleClick={() => handleDoubleClick(originalIndex, caption.word)}
+                  onMouseDown={(e) => handleMouseDown(e, index)}
+                  onDoubleClick={() => handleDoubleClick(index, caption.word)}
                 >
                   {isEditing ? (
                     <input
