@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { VideoUpload } from "./VideoUpload";
 import { VideoEditorCanvas } from "./VideoEditorCanvas";
 import { CleanTimeline } from "./CleanTimeline";
@@ -40,8 +40,6 @@ export const ProEditorWorkspace = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -149,11 +147,11 @@ export const ProEditorWorkspace = () => {
     }
   };
 
-  const handleCaptionDrag = useCallback((index: number, x: number, y: number) => {
+  const handleCaptionDrag = (index: number, x: number, y: number) => {
     setCaptions(prev => prev.map((caption, i) => 
       i === index ? { ...caption, positionX: x, positionY: y } : caption
     ));
-  }, []);
+  };
 
   const handleCaptionClick = (index: number) => {
     setSelectedWordIndex(index);
@@ -290,12 +288,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   const downloadVideoWithCaptions = async () => {
     if (!videoRef.current || !videoFile) return;
 
-    setIsExporting(true);
-    setExportProgress(0);
-
     toast({
-      title: "Starting export...",
-      description: "This may take a moment",
+      title: "Processing video...",
+      description: "Rendering captions onto video frames",
+      duration: 300000,
     });
 
     const video = videoRef.current;
@@ -306,24 +302,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Capture video stream from canvas
-    const canvasStream = canvas.captureStream(30);
-    
-    // Get audio track from the original video
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaElementSource(video);
-    const destination = audioContext.createMediaStreamDestination();
-    source.connect(destination);
-    source.connect(audioContext.destination);
-    
-    // Combine video and audio tracks
-    const videoTrack = canvasStream.getVideoTracks()[0];
-    const audioTrack = destination.stream.getAudioTracks()[0];
-    const combinedStream = new MediaStream([videoTrack, audioTrack]);
-    
-    const mediaRecorder = new MediaRecorder(combinedStream, {
-      mimeType: 'video/webm;codecs=vp9,opus',
-      videoBitsPerSecond: 8000000,
+    const stream = canvas.captureStream(30);
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 5000000,
     });
 
     const chunks: Blob[] = [];
@@ -356,8 +338,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     const drawFrame = () => {
       const currentTime = video.currentTime;
-      const progress = (currentTime / video.duration) * 100;
-      setExportProgress(Math.min(progress, 99));
       
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -366,14 +346,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       );
 
       activeCaptions.forEach((caption) => {
-        // Scale font size based on video height to ensure visibility
-        const baseFontSize = caption.fontSize || 32;
-        const scaledFontSize = Math.max(baseFontSize, canvas.height * 0.05); // At least 5% of video height
+        const fontSize = caption.fontSize || 32;
         const fontFamily = caption.fontFamily || 'Inter';
         const color = caption.color || '#ffffff';
         const bgColor = caption.backgroundColor || 'transparent';
         
-        ctx.font = `bold ${scaledFontSize}px ${fontFamily}`;
+        ctx.font = `${fontSize}px ${fontFamily}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -382,19 +360,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
         if (bgColor !== 'transparent') {
           const metrics = ctx.measureText(caption.word);
-          const padding = scaledFontSize * 0.3;
+          const padding = 10;
           ctx.fillStyle = bgColor;
           ctx.fillRect(
             x - metrics.width / 2 - padding,
-            y - scaledFontSize / 2 - padding,
+            y - fontSize / 2 - padding,
             metrics.width + padding * 2,
-            scaledFontSize + padding * 2
+            fontSize + padding * 2
           );
         }
 
-        // Add text stroke for better readability
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = scaledFontSize * 0.08;
+        ctx.lineWidth = 3;
         ctx.strokeText(caption.word, x, y);
         
         ctx.fillStyle = color;
@@ -404,11 +381,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       if (currentTime < video.duration) {
         requestAnimationFrame(drawFrame);
       } else {
-        setExportProgress(100);
         mediaRecorder.stop();
         video.pause();
-        audioContext.close();
-        setIsExporting(false);
       }
     };
 
@@ -547,29 +521,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         onExport={handleExport}
         captionCount={captions.length}
       />
-
-      {/* Export Progress Overlay */}
-      {isExporting && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Exporting Video</h3>
-            <div className="space-y-4">
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${exportProgress}%` }}
-                />
-              </div>
-              <p className="text-sm text-muted-foreground text-center">
-                {exportProgress < 100 ? `Processing: ${Math.round(exportProgress)}%` : 'Finalizing...'}
-              </p>
-              <p className="text-xs text-muted-foreground text-center">
-                Please wait while we render your video with captions
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
