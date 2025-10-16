@@ -326,52 +326,67 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     video.play();
 
     const duration = video.duration;
+    
+    // Calculate scaling factor to ensure captions match preview size
+    const scaleFactor = Math.min(canvas.width / 1920, canvas.height / 1080);
+    
     const drawFrame = () => {
       const currentTime = video.currentTime;
       const progress = Math.min((currentTime / duration) * 90, 90);
       setExportProgress(progress);
       setExportStatus(`Rendering: ${Math.floor(currentTime)}s / ${Math.floor(duration)}s`);
       
+      // Clear canvas and draw video frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+      // Filter captions for current time
       const activeCaptions = captions.filter(
         caption => currentTime >= caption.start && currentTime <= caption.end
       );
 
+      // Render each active caption
       activeCaptions.forEach((caption) => {
-        const fontSize = caption.fontSize || 32;
+        // Scale font size based on video dimensions
+        const baseFontSize = caption.fontSize || 48;
+        const scaledFontSize = Math.max(baseFontSize * scaleFactor, 24); // Minimum 24px
         const fontFamily = caption.fontFamily || 'Inter';
         const color = caption.color || '#ffffff';
         const bgColor = caption.backgroundColor || 'transparent';
         
-        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.font = `bold ${scaledFontSize}px ${fontFamily}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
+        // Calculate position based on percentage
         const x = (caption.positionX || 50) * canvas.width / 100;
         const y = (caption.positionY || 85) * canvas.height / 100;
 
+        // Draw background if specified
         if (bgColor !== 'transparent') {
           const metrics = ctx.measureText(caption.word);
-          const padding = 10;
+          const padding = 15 * scaleFactor;
           ctx.fillStyle = bgColor;
           ctx.fillRect(
             x - metrics.width / 2 - padding,
-            y - fontSize / 2 - padding,
+            y - scaledFontSize / 2 - padding,
             metrics.width + padding * 2,
-            fontSize + padding * 2
+            scaledFontSize + padding * 2
           );
         }
 
+        // Draw text outline for better visibility
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = Math.max(4 * scaleFactor, 2);
         ctx.strokeText(caption.word, x, y);
         
+        // Draw filled text
         ctx.fillStyle = color;
         ctx.fillText(caption.word, x, y);
       });
 
-      if (currentTime < duration) {
+      // Continue rendering or stop
+      if (currentTime < duration - 0.1) {
         requestAnimationFrame(drawFrame);
       } else {
         mediaRecorder.stop();
