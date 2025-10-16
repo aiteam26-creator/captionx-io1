@@ -335,20 +335,23 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const baseSize = Math.min(canvas.width, canvas.height);
     const scaleFactor = baseSize / 1080; // Use 1080p as reference
     
-    let lastFrameTime = 0;
-    const targetFrameTime = 1000 / 30; // 30fps
+    // Track rendering state
+    let isRendering = true;
+    let lastUpdateTime = 0;
     
-    const drawFrame = (timestamp: number) => {
-      // Throttle to maintain consistent 30fps
-      if (timestamp - lastFrameTime < targetFrameTime) {
-        if (video.currentTime < duration - 0.1) {
-          requestAnimationFrame(drawFrame);
-        }
-        return;
-      }
-      lastFrameTime = timestamp;
+    const renderLoop = () => {
+      if (!isRendering) return;
       
       const currentTime = video.currentTime;
+      
+      // Only update every frame (30fps = ~33ms)
+      const now = Date.now();
+      if (now - lastUpdateTime < 30) {
+        requestAnimationFrame(renderLoop);
+        return;
+      }
+      lastUpdateTime = now;
+      
       const progress = Math.min((currentTime / duration) * 90, 90);
       setExportProgress(progress);
       setExportStatus(`Rendering: ${Math.floor(currentTime)}s / ${Math.floor(duration)}s`);
@@ -403,16 +406,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         ctx.fillText(caption.word, x, y);
       });
 
-      // Continue rendering or stop
-      if (currentTime < duration - 0.1) {
-        requestAnimationFrame(drawFrame);
-      } else {
-        mediaRecorder.stop();
-        video.pause();
-      }
+      // Continue rendering
+      requestAnimationFrame(renderLoop);
     };
 
-    requestAnimationFrame(drawFrame);
+    // Start rendering loop
+    requestAnimationFrame(renderLoop);
+    
+    // Stop recording when video ends
+    video.onended = () => {
+      isRendering = false;
+      mediaRecorder.stop();
+    };
   };
 
   const formatSRTTime = (seconds: number): string => {
