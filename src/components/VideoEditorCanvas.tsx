@@ -55,6 +55,9 @@ export const VideoEditorCanvas = ({
     e.preventDefault();
     if (e.button !== 0) return;
 
+    // Always select the word immediately on click
+    onCaptionClick(index);
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -79,9 +82,6 @@ export const VideoEditorCanvas = ({
     
     setDragging(index);
     setIsDragStarted(false);
-    
-    // Always select the word on mousedown
-    onCaptionClick(index);
   };
 
   const handleMouseMove = (e: MouseEvent) => {
