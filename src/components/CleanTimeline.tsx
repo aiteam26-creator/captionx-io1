@@ -222,6 +222,8 @@ export const CleanTimeline = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     onCaptionClick(index);
+                    // Seek to the start of the selected word so it appears on video
+                    onSeek(caption.start + 0.01);
                   }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
