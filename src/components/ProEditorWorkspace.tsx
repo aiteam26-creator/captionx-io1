@@ -51,44 +51,15 @@ export const ProEditorWorkspace = () => {
     await transcribeVideo(file);
   };
 
-  const extractAudio = async (file: File): Promise<string> => {
+  const fileToBase64 = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      video.src = URL.createObjectURL(file);
-      
-      video.onloadedmetadata = () => {
-        const canvas = document.createElement('canvas');
-        const context = new AudioContext();
-        const source = context.createMediaElementSource(video);
-        const dest = context.createMediaStreamDestination();
-        
-        source.connect(dest);
-        
-        const mediaRecorder = new MediaRecorder(dest.stream);
-        const chunks: Blob[] = [];
-        
-        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = () => {
-            const base64 = (reader.result as string).split(',')[1];
-            resolve(base64);
-          };
-        };
-        
-        video.play();
-        mediaRecorder.start();
-        
-        setTimeout(() => {
-          video.pause();
-          mediaRecorder.stop();
-          source.disconnect();
-        }, video.duration * 1000);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
       };
-      
-      video.onerror = reject;
+      reader.onerror = reject;
     });
   };
 
@@ -98,21 +69,16 @@ export const ProEditorWorkspace = () => {
 
     try {
       toast({
-        title: "Extracting audio...",
-        description: "Processing your video file",
-      });
-
-      const audioBase64 = await extractAudio(file);
-      setProgress(30);
-
-      toast({
         title: "Generating captions...",
-        description: "Using AI to transcribe your video",
+        description: "Processing your video with AI",
         duration: 300000,
       });
 
+      const videoBase64 = await fileToBase64(file);
+      setProgress(30);
+
       const { data, error } = await supabase.functions.invoke('transcribe-video', {
-        body: { audioBase64 }
+        body: { videoBase64, mimeType: file.type }
       });
 
       if (error) throw error;

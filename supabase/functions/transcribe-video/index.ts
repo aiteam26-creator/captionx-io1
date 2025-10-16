@@ -83,26 +83,27 @@ serve(async (req) => {
   }
 
   try {
-    const { audioBase64 } = await req.json();
+    const { videoBase64, mimeType } = await req.json();
     
-    if (!audioBase64) {
-      throw new Error('No audio data provided');
+    if (!videoBase64) {
+      throw new Error('No video data provided');
     }
 
-    console.log('Processing audio for transcription...');
+    console.log('Processing video for transcription...');
 
-    // Process audio in chunks
-    const binaryAudio = processBase64Chunks(audioBase64);
+    // Process video in chunks
+    const binaryVideo = processBase64Chunks(videoBase64);
     
-    // Prepare form data for Whisper
+    // Prepare form data for Whisper (accepts video files directly)
     const formData = new FormData();
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const fileExtension = mimeType?.includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob([binaryVideo], { type: mimeType || 'video/webm' });
+    formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
     formData.append('timestamp_granularities[]', 'word');
 
-    console.log('Sending to OpenAI Whisper...');
+    console.log('Sending video to OpenAI Whisper...');
 
     // Send to OpenAI Whisper
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
