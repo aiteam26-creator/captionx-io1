@@ -264,10 +264,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Use video dimensions or scale to reasonable size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Capture video stream from canvas
+    // Capture video stream from canvas at 30fps
     const canvasStream = canvas.captureStream(30);
     const videoTrack = canvasStream.getVideoTracks()[0];
     
@@ -282,9 +283,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       combinedStream.addTrack(audioTrack);
     }
     
+    // Use high quality settings to prevent stuttering
     const mediaRecorder = new MediaRecorder(combinedStream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 8000000, // Increased bitrate for faster encoding
+      mimeType: 'video/webm;codecs=vp8',
+      videoBitsPerSecond: 12000000, // Higher bitrate for better quality
+      audioBitsPerSecond: 256000,
     });
 
     const chunks: Blob[] = [];
@@ -327,10 +330,24 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     const duration = video.duration;
     
-    // Calculate scaling factor to ensure captions match preview size
-    const scaleFactor = Math.min(canvas.width / 1920, canvas.height / 1080);
+    // Better scaling - ensure captions are always visible and properly sized
+    // Base the scale on the smaller dimension to ensure captions fit
+    const baseSize = Math.min(canvas.width, canvas.height);
+    const scaleFactor = baseSize / 1080; // Use 1080p as reference
     
-    const drawFrame = () => {
+    let lastFrameTime = 0;
+    const targetFrameTime = 1000 / 30; // 30fps
+    
+    const drawFrame = (timestamp: number) => {
+      // Throttle to maintain consistent 30fps
+      if (timestamp - lastFrameTime < targetFrameTime) {
+        if (video.currentTime < duration - 0.1) {
+          requestAnimationFrame(drawFrame);
+        }
+        return;
+      }
+      lastFrameTime = timestamp;
+      
       const currentTime = video.currentTime;
       const progress = Math.min((currentTime / duration) * 90, 90);
       setExportProgress(progress);
@@ -345,11 +362,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         caption => currentTime >= caption.start && currentTime <= caption.end
       );
 
-      // Render each active caption
+      // Render each active caption with better sizing
       activeCaptions.forEach((caption) => {
-        // Scale font size based on video dimensions
-        const baseFontSize = caption.fontSize || 48;
-        const scaledFontSize = Math.max(baseFontSize * scaleFactor, 24); // Minimum 24px
+        // Use larger base font size and scale appropriately
+        const baseFontSize = caption.fontSize || 64;
+        // Ensure minimum readable size - scale up for larger videos
+        const scaledFontSize = Math.max(baseFontSize * scaleFactor, 48);
         const fontFamily = caption.fontFamily || 'Inter';
         const color = caption.color || '#ffffff';
         const bgColor = caption.backgroundColor || 'transparent';
@@ -365,7 +383,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         // Draw background if specified
         if (bgColor !== 'transparent') {
           const metrics = ctx.measureText(caption.word);
-          const padding = 15 * scaleFactor;
+          const padding = 20 * scaleFactor;
           ctx.fillStyle = bgColor;
           ctx.fillRect(
             x - metrics.width / 2 - padding,
@@ -375,9 +393,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           );
         }
 
-        // Draw text outline for better visibility
+        // Draw thick text outline for better visibility
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = Math.max(4 * scaleFactor, 2);
+        ctx.lineWidth = Math.max(6 * scaleFactor, 4);
         ctx.strokeText(caption.word, x, y);
         
         // Draw filled text
@@ -394,7 +412,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       }
     };
 
-    drawFrame();
+    requestAnimationFrame(drawFrame);
   };
 
   const formatSRTTime = (seconds: number): string => {
