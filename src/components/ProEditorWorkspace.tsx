@@ -5,6 +5,7 @@ import { CleanTimeline } from "./CleanTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
+import { ExportProgress } from "./ExportProgress";
 import { KeyframeExtractor } from "./KeyframeExtractor";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
@@ -40,6 +41,9 @@ export const ProEditorWorkspace = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportStatus, setExportStatus] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -251,11 +255,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   const downloadVideoWithCaptions = async () => {
     if (!videoRef.current || !videoFile) return;
 
-    toast({
-      title: "Processing video...",
-      description: "Rendering captions onto video frames",
-      duration: 300000,
-    });
+    setIsExporting(true);
+    setExportProgress(0);
+    setExportStatus("Initializing video processing...");
 
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
@@ -268,13 +270,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const stream = canvas.captureStream(30);
     const mediaRecorder = new MediaRecorder(stream, {
       mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 5000000,
+      videoBitsPerSecond: 8000000, // Increased bitrate for faster encoding
     });
 
     const chunks: Blob[] = [];
     mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
     
     mediaRecorder.onstop = () => {
+      setExportStatus("Finalizing download...");
+      setExportProgress(95);
+      
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -285,10 +290,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast({
-        title: "Success! 🎉",
-        description: "Your video with burned-in captions is downloading",
-      });
+      setExportProgress(100);
+      setExportStatus("Export complete!");
+      
+      setTimeout(() => {
+        setIsExporting(false);
+        toast({
+          title: "Success! 🎉",
+          description: "Your video with burned-in captions is ready",
+        });
+      }, 1000);
     };
 
     video.currentTime = 0;
@@ -296,11 +307,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       video.onseeked = resolve;
     });
 
+    setExportStatus("Rendering video with captions...");
     mediaRecorder.start();
     video.play();
 
+    const duration = video.duration;
     const drawFrame = () => {
       const currentTime = video.currentTime;
+      const progress = Math.min((currentTime / duration) * 90, 90);
+      setExportProgress(progress);
+      setExportStatus(`Rendering: ${Math.floor(currentTime)}s / ${Math.floor(duration)}s`);
       
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -341,7 +357,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         ctx.fillText(caption.word, x, y);
       });
 
-      if (currentTime < video.duration) {
+      if (currentTime < duration) {
         requestAnimationFrame(drawFrame);
       } else {
         mediaRecorder.stop();
@@ -483,6 +499,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         onClose={() => setExportModalOpen(false)}
         onExport={handleExport}
         captionCount={captions.length}
+      />
+
+      {/* Export Progress */}
+      <ExportProgress
+        open={isExporting}
+        progress={exportProgress}
+        status={exportStatus}
       />
     </div>
   );
