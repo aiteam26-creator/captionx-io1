@@ -28,25 +28,55 @@ interface GlobalCaptionSettingsProps {
 
 const FONTS = [
   "Inter",
-  "Arial",
-  "Helvetica",
-  "Times New Roman",
-  "Georgia",
-  "Courier New",
-  "Verdana",
-  "Trebuchet MS",
-  "Impact",
-  "Comic Sans MS",
-  "Palatino",
-  "Garamond",
-  "Bookman",
-  "Avant Garde",
+  "Poppins",
+  "Montserrat",
   "Roboto",
   "Open Sans",
-  "Montserrat",
   "Lato",
+  "Raleway",
+  "Playfair Display",
+  "Merriweather",
+  "Lora",
+  "Bebas Neue",
   "Oswald",
-  "Bebas Neue"
+  "Nunito",
+  "Ubuntu",
+  "PT Sans",
+  "Crimson Text",
+  "Archivo",
+  "Cabin",
+  "Quicksand",
+  "Barlow",
+  "Barlow Condensed",
+  "Righteous",
+  "Bungee",
+  "Permanent Marker",
+  "Bangers",
+  "Black Ops One",
+  "Fredoka One",
+  "Audiowide",
+  "Pacifico",
+  "Dancing Script",
+  "Great Vibes",
+  "Sacramento",
+  "Satisfy",
+  "Caveat",
+  "Kaushan Script",
+  "Lobster",
+  "Cookie",
+  "Courgette",
+  "Amatic SC",
+  "Indie Flower",
+  "Shadows Into Light",
+  "Patrick Hand",
+  "Reenie Beanie",
+  "Rock Salt",
+  "Covered By Your Grace",
+  "Homemade Apple",
+  "Architects Daughter",
+  "Waiting for the Sunrise",
+  "Arial",
+  "Helvetica",
 ];
 
 const POSITION_PRESETS = [
@@ -139,10 +169,10 @@ export const GlobalCaptionSettings = ({ captions, onApplySettings }: GlobalCapti
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-60">
+            <SelectContent className="max-h-80 bg-background z-50">
               {FONTS.map((font) => (
                 <SelectItem key={font} value={font}>
-                  <span style={{ fontFamily: font }}>{font}</span>
+                  <span style={{ fontFamily: font, fontSize: "16px" }}>{font}</span>
                 </SelectItem>
               ))}
             </SelectContent>
