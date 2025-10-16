@@ -39,6 +39,8 @@ export const VideoEditorCanvas = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<number | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [isDragStarted, setIsDragStarted] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
@@ -69,7 +71,16 @@ export const VideoEditorCanvas = ({
       y: e.clientY - rect.top - currentY,
     });
     
+    // Store initial mouse position to detect drag vs click
+    setDragStartPos({
+      x: e.clientX,
+      y: e.clientY,
+    });
+    
     setDragging(index);
+    setIsDragStarted(false);
+    
+    // Always select the word on mousedown
     onCaptionClick(index);
   };
 
@@ -77,6 +88,19 @@ export const VideoEditorCanvas = ({
     if (dragging === null || !containerRef.current) return;
 
     e.preventDefault();
+    
+    // Check if mouse has moved enough to start dragging (threshold: 5px)
+    if (!isDragStarted) {
+      const dx = Math.abs(e.clientX - dragStartPos.x);
+      const dy = Math.abs(e.clientY - dragStartPos.y);
+      
+      if (dx > 5 || dy > 5) {
+        setIsDragStarted(true);
+      } else {
+        // Not enough movement yet, don't start dragging
+        return;
+      }
+    }
     
     const rect = containerRef.current.getBoundingClientRect();
     
@@ -92,6 +116,7 @@ export const VideoEditorCanvas = ({
 
   const handleMouseUp = () => {
     setDragging(null);
+    setIsDragStarted(false);
   };
 
   useEffect(() => {
@@ -104,7 +129,7 @@ export const VideoEditorCanvas = ({
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [dragging, dragOffset]);
+  }, [dragging, dragOffset, isDragStarted, dragStartPos]);
 
   const handleDoubleClick = (index: number, word: string) => {
     setEditingIndex(index);
@@ -130,7 +155,7 @@ export const VideoEditorCanvas = ({
       {/* Caption overlays */}
       {getCurrentCaptions().map(({ caption, index: originalIndex }) => {
         const isSelected = selectedWordIndex === originalIndex;
-        const isDragging = dragging === originalIndex;
+        const isDraggingThis = dragging === originalIndex && isDragStarted;
         const isEditing = editingIndex === originalIndex;
 
         return (
@@ -140,17 +165,17 @@ export const VideoEditorCanvas = ({
                 <div
                   className={`
                     absolute select-none
-                    ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+                    ${isDraggingThis ? 'cursor-grabbing' : 'cursor-grab'}
                     ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-black/50' : ''}
-                    ${isDragging ? 'scale-105' : 'hover:scale-[1.02]'}
-                    ${isDragging ? '' : 'transition-all duration-150'}
+                    ${isDraggingThis ? 'scale-105' : 'hover:scale-[1.02]'}
+                    ${isDraggingThis ? '' : 'transition-all duration-150'}
                   `}
                   style={{
                     left: `${caption.positionX || 50}%`,
                     top: `${caption.positionY || 80}%`,
                     transform: 'translate(-50%, -50%)',
-                    zIndex: isSelected || isDragging ? 50 : 40,
-                    willChange: isDragging ? 'transform' : 'auto',
+                    zIndex: isSelected || isDraggingThis ? 50 : 40,
+                    willChange: isDraggingThis ? 'transform' : 'auto',
                   }}
                   onMouseDown={(e) => handleMouseDown(e, originalIndex)}
                   onDoubleClick={() => handleDoubleClick(originalIndex, caption.word)}
@@ -188,7 +213,7 @@ export const VideoEditorCanvas = ({
                         color: caption.color || "#ffffff",
                         backgroundColor: isSelected 
                           ? "rgba(59, 130, 246, 0.4)" 
-                          : isDragging 
+                          : isDraggingThis 
                           ? "rgba(59, 130, 246, 0.3)" 
                           : caption.backgroundColor || "rgba(0, 0, 0, 0.75)",
                         textShadow: caption.isKeyword 
@@ -211,7 +236,7 @@ export const VideoEditorCanvas = ({
                       )}
                       
                       {/* Control hint on selected */}
-                      {isSelected && !isDragging && (
+                      {isSelected && !isDraggingThis && (
                         <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-blue-500 px-3 py-1.5 rounded-md shadow-lg animate-fade-in">
                           <Move className="w-3.5 h-3.5 text-white" />
                           <span className="text-[10px] font-medium text-white uppercase tracking-wide">Drag to move</span>
