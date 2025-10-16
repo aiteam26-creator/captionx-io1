@@ -50,6 +50,7 @@ export const VideoEditorCanvas = ({
 
   const handleMouseDown = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
+    e.preventDefault();
     if (e.button !== 0) return;
 
     const container = containerRef.current;
@@ -58,12 +59,14 @@ export const VideoEditorCanvas = ({
     const rect = container.getBoundingClientRect();
     const caption = captions[index];
     
+    // Calculate the actual pixel position of the caption
     const currentX = ((caption.positionX || 50) / 100) * rect.width;
     const currentY = ((caption.positionY || 80) / 100) * rect.height;
 
+    // Store the offset between mouse click and caption center
     setDragOffset({
-      x: e.clientX - currentX,
-      y: e.clientY - currentY,
+      x: e.clientX - rect.left - currentX,
+      y: e.clientY - rect.top - currentY,
     });
     
     setDragging(index);
@@ -73,11 +76,18 @@ export const VideoEditorCanvas = ({
   const handleMouseMove = (e: MouseEvent) => {
     if (dragging === null || !containerRef.current) return;
 
+    e.preventDefault();
+    
     const rect = containerRef.current.getBoundingClientRect();
+    
+    // Calculate new position as percentage
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
     const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
 
-    onCaptionDrag(dragging, Math.max(0, Math.min(100, x)), Math.max(0, Math.min(100, y)));
+    // Use requestAnimationFrame for smoother updates
+    requestAnimationFrame(() => {
+      onCaptionDrag(dragging, Math.max(0, Math.min(100, x)), Math.max(0, Math.min(100, y)));
+    });
   };
 
   const handleMouseUp = () => {
@@ -86,7 +96,7 @@ export const VideoEditorCanvas = ({
 
   useEffect(() => {
     if (dragging !== null) {
-      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mousemove", handleMouseMove, { passive: false });
       document.addEventListener("mouseup", handleMouseUp);
 
       return () => {
@@ -94,7 +104,7 @@ export const VideoEditorCanvas = ({
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [dragging]);
+  }, [dragging, dragOffset]);
 
   const handleDoubleClick = (index: number, word: string) => {
     setEditingIndex(index);
@@ -129,15 +139,18 @@ export const VideoEditorCanvas = ({
               <TooltipTrigger asChild>
                 <div
                   className={`
-                    absolute cursor-move select-none transition-all duration-150
+                    absolute select-none
+                    ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
                     ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-black/50' : ''}
-                    ${isDragging ? 'scale-110 opacity-80' : 'hover:scale-105'}
+                    ${isDragging ? 'scale-105' : 'hover:scale-[1.02]'}
+                    ${isDragging ? '' : 'transition-all duration-150'}
                   `}
                   style={{
                     left: `${caption.positionX || 50}%`,
                     top: `${caption.positionY || 80}%`,
                     transform: 'translate(-50%, -50%)',
-                    zIndex: isSelected ? 50 : 40,
+                    zIndex: isSelected || isDragging ? 50 : 40,
+                    willChange: isDragging ? 'transform' : 'auto',
                   }}
                   onMouseDown={(e) => handleMouseDown(e, originalIndex)}
                   onDoubleClick={() => handleDoubleClick(originalIndex, caption.word)}
