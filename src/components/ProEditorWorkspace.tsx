@@ -267,8 +267,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const stream = canvas.captureStream(30);
-    const mediaRecorder = new MediaRecorder(stream, {
+    // Capture video stream from canvas
+    const canvasStream = canvas.captureStream(30);
+    const videoTrack = canvasStream.getVideoTracks()[0];
+    
+    // Create a new MediaStream from the video element to get audio
+    const videoStream = (video as any).captureStream ? (video as any).captureStream() : (video as any).mozCaptureStream();
+    const audioTrack = videoStream.getAudioTracks()[0];
+    
+    // Combine video track from canvas with audio track from video
+    const combinedStream = new MediaStream();
+    combinedStream.addTrack(videoTrack);
+    if (audioTrack) {
+      combinedStream.addTrack(audioTrack);
+    }
+    
+    const mediaRecorder = new MediaRecorder(combinedStream, {
       mimeType: 'video/webm;codecs=vp9',
       videoBitsPerSecond: 8000000, // Increased bitrate for faster encoding
     });
