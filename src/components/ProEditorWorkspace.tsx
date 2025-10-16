@@ -264,13 +264,30 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Use video dimensions or scale to reasonable size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const stream = canvas.captureStream(30);
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 8000000, // Increased bitrate for faster encoding
+    // Capture video stream from canvas at 30fps
+    const canvasStream = canvas.captureStream(30);
+    const videoTrack = canvasStream.getVideoTracks()[0];
+    
+    // Create a new MediaStream from the video element to get audio
+    const videoStream = (video as any).captureStream ? (video as any).captureStream() : (video as any).mozCaptureStream();
+    const audioTrack = videoStream.getAudioTracks()[0];
+    
+    // Combine video track from canvas with audio track from video
+    const combinedStream = new MediaStream();
+    combinedStream.addTrack(videoTrack);
+    if (audioTrack) {
+      combinedStream.addTrack(audioTrack);
+    }
+    
+    // Use high quality settings to prevent stuttering
+    const mediaRecorder = new MediaRecorder(combinedStream, {
+      mimeType: 'video/webm;codecs=vp8',
+      videoBitsPerSecond: 12000000, // Higher bitrate for better quality
+      audioBitsPerSecond: 256000,
     });
 
     const chunks: Blob[] = [];
@@ -312,60 +329,95 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     video.play();
 
     const duration = video.duration;
-    const drawFrame = () => {
+    
+    // Better scaling - ensure captions are always visible and properly sized
+    // Base the scale on the smaller dimension to ensure captions fit
+    const baseSize = Math.min(canvas.width, canvas.height);
+    const scaleFactor = baseSize / 1080; // Use 1080p as reference
+    
+    // Track rendering state
+    let isRendering = true;
+    let lastUpdateTime = 0;
+    
+    const renderLoop = () => {
+      if (!isRendering) return;
+      
       const currentTime = video.currentTime;
+      
+      // Only update every frame (30fps = ~33ms)
+      const now = Date.now();
+      if (now - lastUpdateTime < 30) {
+        requestAnimationFrame(renderLoop);
+        return;
+      }
+      lastUpdateTime = now;
+      
       const progress = Math.min((currentTime / duration) * 90, 90);
       setExportProgress(progress);
       setExportStatus(`Rendering: ${Math.floor(currentTime)}s / ${Math.floor(duration)}s`);
       
+      // Clear canvas and draw video frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+      // Filter captions for current time
       const activeCaptions = captions.filter(
         caption => currentTime >= caption.start && currentTime <= caption.end
       );
 
+      // Render each active caption with better sizing
       activeCaptions.forEach((caption) => {
-        const fontSize = caption.fontSize || 32;
+        // Use larger base font size and scale appropriately
+        const baseFontSize = caption.fontSize || 64;
+        // Ensure minimum readable size - scale up for larger videos
+        const scaledFontSize = Math.max(baseFontSize * scaleFactor, 48);
         const fontFamily = caption.fontFamily || 'Inter';
         const color = caption.color || '#ffffff';
         const bgColor = caption.backgroundColor || 'transparent';
         
-        ctx.font = `${fontSize}px ${fontFamily}`;
+        ctx.font = `bold ${scaledFontSize}px ${fontFamily}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
+        // Calculate position based on percentage
         const x = (caption.positionX || 50) * canvas.width / 100;
         const y = (caption.positionY || 85) * canvas.height / 100;
 
+        // Draw background if specified
         if (bgColor !== 'transparent') {
           const metrics = ctx.measureText(caption.word);
-          const padding = 10;
+          const padding = 20 * scaleFactor;
           ctx.fillStyle = bgColor;
           ctx.fillRect(
             x - metrics.width / 2 - padding,
-            y - fontSize / 2 - padding,
+            y - scaledFontSize / 2 - padding,
             metrics.width + padding * 2,
-            fontSize + padding * 2
+            scaledFontSize + padding * 2
           );
         }
 
+        // Draw thick text outline for better visibility
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = Math.max(6 * scaleFactor, 4);
         ctx.strokeText(caption.word, x, y);
         
+        // Draw filled text
         ctx.fillStyle = color;
         ctx.fillText(caption.word, x, y);
       });
 
-      if (currentTime < duration) {
-        requestAnimationFrame(drawFrame);
-      } else {
-        mediaRecorder.stop();
-        video.pause();
-      }
+      // Continue rendering
+      requestAnimationFrame(renderLoop);
     };
 
-    drawFrame();
+    // Start rendering loop
+    requestAnimationFrame(renderLoop);
+    
+    // Stop recording when video ends
+    video.onended = () => {
+      isRendering = false;
+      mediaRecorder.stop();
+    };
   };
 
   const formatSRTTime = (seconds: number): string => {
