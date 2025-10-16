@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -36,6 +36,20 @@ const COLOR_SWATCHES = [
 
 export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => {
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false);
+  const typographySectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to typography section when a caption is selected
+  useEffect(() => {
+    if (caption && typographySectionRef.current && containerRef.current) {
+      setTimeout(() => {
+        typographySectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [caption]);
 
   if (!caption) {
     return (
@@ -51,11 +65,11 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="p-5 space-y-5">
         
         {/* Typography Section */}
-        <div className="space-y-3">
+        <div ref={typographySectionRef} className="space-y-3">
           <div className="flex items-center gap-2 mb-3">
             <Type className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={2} />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Typography</span>
