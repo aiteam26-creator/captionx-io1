@@ -89,6 +89,11 @@ serve(async (req) => {
       throw new Error('No video data provided');
     }
 
+    const openAIKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIKey) {
+      throw new Error('OPENAI_API_KEY not configured');
+    }
+
     console.log('Processing video for transcription...');
     console.log('Video size (base64):', Math.round(videoBase64.length / 1024 / 1024), 'MB');
 
@@ -110,29 +115,45 @@ serve(async (req) => {
     formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
-    formData.append('language', 'en'); // Add language hint for better accuracy
 
     console.log('Sending video to OpenAI Whisper...');
     console.log('File extension:', fileExtension);
+    console.log('API Key exists:', !!openAIKey);
+    console.log('API Key length:', openAIKey.length);
 
-    // Send to OpenAI Whisper
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      },
-      body: formData,
-    });
+    // Send to OpenAI Whisper with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error status:', response.status);
-      console.error('OpenAI API error details:', errorText);
-      throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
+    let result: any;
+    try {
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIKey}`,
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error status:', response.status);
+        console.error('OpenAI API error details:', errorText);
+        throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
+      }
+
+      result = await response.json();
+      console.log('Transcription completed with word-level timestamps');
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Transcription timed out after 2 minutes. Try a shorter video.');
+      }
+      throw fetchError;
     }
-
-    const result = await response.json();
-    console.log('Transcription completed with word-level timestamps');
 
     // Parse word-level captions with accurate timestamps
     const captions: Array<{
