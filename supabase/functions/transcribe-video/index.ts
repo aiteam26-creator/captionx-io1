@@ -116,8 +116,9 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${errorText}`);
+      console.error('OpenAI API error status:', response.status);
+      console.error('OpenAI API error details:', errorText);
+      throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
     }
 
     const result = await response.json();
