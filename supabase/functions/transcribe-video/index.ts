@@ -90,20 +90,30 @@ serve(async (req) => {
     }
 
     console.log('Processing video for transcription...');
+    console.log('Video size (base64):', Math.round(videoBase64.length / 1024 / 1024), 'MB');
+
+    // Check file size limit (25MB for Whisper API)
+    const estimatedSize = (videoBase64.length * 3) / 4; // Convert base64 to bytes
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    
+    if (estimatedSize > maxSize) {
+      throw new Error(`File too large. Maximum size is 25MB, got ${Math.round(estimatedSize / 1024 / 1024)}MB`);
+    }
 
     // Process video in chunks
     const binaryVideo = processBase64Chunks(videoBase64);
     
     // Prepare form data for Whisper (accepts video files directly)
     const formData = new FormData();
-    const fileExtension = mimeType?.includes('mp4') ? 'mp4' : 'webm';
+    const fileExtension = mimeType?.includes('mp4') ? 'mp4' : mimeType?.includes('quicktime') ? 'mov' : 'webm';
     const blob = new Blob([binaryVideo], { type: mimeType || 'video/webm' });
     formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
-    // Note: timestamp_granularities is not needed, word timestamps are in verbose_json
+    formData.append('language', 'en'); // Add language hint for better accuracy
 
     console.log('Sending video to OpenAI Whisper...');
+    console.log('File extension:', fileExtension);
 
     // Send to OpenAI Whisper
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
