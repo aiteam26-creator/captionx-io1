@@ -101,7 +101,7 @@ serve(async (req) => {
     formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
-    formData.append('timestamp_granularities[]', 'word');
+    // Note: timestamp_granularities is not needed, word timestamps are in verbose_json
 
     console.log('Sending video to OpenAI Whisper...');
 
