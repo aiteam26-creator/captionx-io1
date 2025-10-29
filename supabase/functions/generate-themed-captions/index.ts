@@ -39,7 +39,35 @@ serve(async (req) => {
     // Build enhanced prompt for AI
     const systemPrompt = `You are an expert subtitle designer specializing in Advanced SubStation Alpha (.ass) format. Create broadcast-quality, professionally styled captions.
 
-CRITICAL REQUIREMENTS:
+🚨🚨🚨 ABSOLUTE CRITICAL REQUIREMENT #1 - READ THIS FIRST 🚨🚨🚨
+════════════════════════════════════════════════════════════════
+
+⛔ SINGLE-LINE MANDATE - THIS IS THE MOST IMPORTANT RULE ⛔
+
+EVERY SINGLE CAPTION MUST APPEAR ON ONE HORIZONTAL LINE ONLY.
+- NO exceptions, NO multi-line captions, NO line breaks EVER
+- NEVER use \\N tag (this creates line breaks - FORBIDDEN)
+- NEVER use \\n tag (this also creates line breaks - FORBIDDEN)  
+- ALL words in a caption MUST stay on the same horizontal baseline
+- Even if a caption has 10+ words, it MUST be ONE SINGLE LINE
+- Use \\q2 tag at the START of EVERY Dialogue Text field
+- Set WrapStyle: 2 in [Script Info] section
+- If you violate this rule, the output will be rejected
+
+EXAMPLES:
+✅ CORRECT: {\\q2\\pos(960,950)}because everyone just invites people
+✅ CORRECT: {\\q2\\pos(960,950)}the quick brown fox jumps over lazy dog
+❌ WRONG:  {\\pos(960,950)}because everyone just\\Ninvites people
+❌ WRONG:  {\\pos(960,950)}the quick brown fox\\njumps over lazy dog
+❌ WRONG:  Any caption that displays text on multiple vertical lines
+
+This single-line requirement overrides ALL other styling considerations.
+If you must choose between visual effects and single-line format, 
+ALWAYS choose single-line format. This is non-negotiable.
+
+════════════════════════════════════════════════════════════════
+
+OTHER REQUIREMENTS (all secondary to single-line rule):
 1. Generate COMPLETE, VALID .ass file with all required sections
 2. Use V4+ Styles format (most compatible)
 3. Position captions intelligently to avoid faces (typically at y: 300-700)
@@ -47,22 +75,7 @@ CRITICAL REQUIREMENTS:
 5. Emphasize key words with appropriate styling
 6. Ensure perfect readability on all backgrounds
 7. Apply theme-specific visual identity consistently
-8. **ABSOLUTELY MANDATORY: ALL TEXT MUST BE IN ONE SINGLE STRAIGHT LINE**
-9. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
-
-⚠️ CRITICAL SINGLE-LINE REQUIREMENT ⚠️
-🚨 NON-NEGOTIABLE RULE: EVERY CAPTION = ONE HORIZONTAL LINE 🚨
-- EVERY caption MUST be displayed as ONE continuous horizontal line
-- ABSOLUTELY NO line breaks, wrapping, or multi-line text under ANY circumstances
-- NEVER EVER use \\N or \\n (line break tags) in dialogue text
-- Keep all words on the same horizontal baseline - NO EXCEPTIONS
-- Text should extend horizontally, NOT vertically
-- Use WrapStyle: 2 (end-of-line word wrapping disabled)
-- Add \\q2 tag to EVERY dialogue line to disable word wrapping
-- Even if caption has 2 words or 10 words - ALWAYS ONE SINGLE LINE
-- If caption is long, that's perfectly fine - just keep it horizontal
-- Professional single-line appearance is the absolute top priority
-- THIS IS MANDATORY - DO NOT DEVIATE FROM SINGLE-LINE FORMAT
+8. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
 
 SIMULTANEOUS SPEECH DETECTION:
 - If multiple words overlap in timing (spoken at the same time), they are simultaneous
@@ -186,6 +199,9 @@ QUALITY CHECKLIST:
 
     const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
 
+⚠️ REMINDER: EVERY CAPTION = ONE HORIZONTAL LINE ONLY ⚠️
+NO \\N tags, NO \\n tags, NO line breaks. Use \\q2 in every Dialogue line.
+
 VIDEO DETAILS:
 - Duration: ${videoDuration.toFixed(2)} seconds
 - Resolution: 1920x1080
@@ -198,10 +214,10 @@ VIDEO DETAILS:
 Group every ${wordsPerCaption} consecutive words into ONE SINGLE CAPTION LINE.
 - Each caption displays ${wordsPerCaption} words in ONE HORIZONTAL LINE
 - Example: If words are ["it", "exclusively", "to", "themselves", "because"], and wordsPerCaption=3:
-  Caption 1: "it exclusively to" (ONE LINE)
-  Caption 2: "themselves because" (ONE LINE)
+  Caption 1: "it exclusively to" (ALL 3 WORDS ON ONE SINGLE LINE - NO BREAKS)
+  Caption 2: "themselves because" (ALL 2 WORDS ON ONE SINGLE LINE - NO BREAKS)
 - NEVER split these grouped words across multiple lines
-- The entire group stays on ONE SINGLE HORIZONTAL LINE
+- The entire group stays on ONE SINGLE HORIZONTAL LINE with \\q2 tag
 
 WORD-BY-WORD TRANSCRIPTION:
 ${captions.map((c: Caption, i: number) => {
@@ -286,15 +302,23 @@ OUTPUT REQUIREMENTS:
 - Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
 - **MANDATORY: Group ${wordsPerCaption} words per caption, display as ONE HORIZONTAL LINE**
-- **CRITICAL: Every Dialogue line MUST include \\q2 tag at the start of the Text field**
-- **NEVER use \\N or \\n tags (line breaks) in any dialogue under ANY circumstances**
-- **ALL captions MUST be single horizontal lines - even with 2 words or 10 words**
+- **CRITICAL: Every Dialogue line MUST start with \\q2 tag in the Text field**
+- **⛔ ABSOLUTELY FORBIDDEN: \\N or \\n tags (these create line breaks) ⛔**
+- **ALL captions MUST be single horizontal lines - NO EXCEPTIONS**
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
-- Format example: "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}it exclusively to themselves" (ONE LINE)
 
-Generate the complete .ass file now:`;
+CORRECT FORMAT EXAMPLES (notice \\q2 at start and NO \\N tags):
+✅ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}because everyone just invites people
+✅ Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,{\\q2\\pos(960,950)\\fad(200,200)}it exclusively to themselves only always
+✅ Dialogue: 0,0:00:09.00,0:00:13.00,Default,,0,0,0,,{\\q2\\pos(960,100)}the quick brown fox jumps over the lazy
+
+FORBIDDEN FORMATS (these create multiple lines - NEVER DO THIS):
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because everyone just\\Ninvites people
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,because everyone\\njust invites
+
+Generate the complete .ass file now with SINGLE-LINE captions only:`;
 
     // Call Lovable AI
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
