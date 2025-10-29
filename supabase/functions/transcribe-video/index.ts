@@ -115,6 +115,7 @@ serve(async (req) => {
     formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
+    formData.append('timestamp_granularities[]', 'word'); // CRITICAL: Request word-level timestamps
 
     console.log('Sending video to OpenAI Whisper...');
     console.log('File extension:', fileExtension);
@@ -146,7 +147,9 @@ serve(async (req) => {
       }
 
       result = await response.json();
-      console.log('Transcription completed with word-level timestamps');
+      console.log('Transcription result:', JSON.stringify(result).substring(0, 500));
+      console.log('Has words array:', !!result.words);
+      console.log('Words count:', result.words?.length || 0);
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
       if (fetchError.name === 'AbortError') {
@@ -166,7 +169,8 @@ serve(async (req) => {
       color: string;
     }> = [];
     
-    if (result.words) {
+    if (result.words && Array.isArray(result.words)) {
+      console.log('Processing', result.words.length, 'words for captions');
       result.words.forEach((wordData: any) => {
         captions.push({
           word: wordData.word.trim(),
@@ -178,6 +182,9 @@ serve(async (req) => {
           color: '#ffffff'
         });
       });
+    } else {
+      console.warn('No word-level timestamps returned from Whisper API');
+      console.warn('Result structure:', Object.keys(result));
     }
 
     // Generate ASS caption file from word-level captions
