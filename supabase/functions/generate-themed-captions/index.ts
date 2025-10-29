@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { theme, animation = 'popup', wordsPerCaption = 4, keyframes, captions, videoDuration } = await req.json();
+    const { theme, keyframes, captions, videoDuration } = await req.json();
     
     if (!theme || !captions || !Array.isArray(captions)) {
       throw new Error('Missing required parameters');
@@ -39,45 +39,7 @@ serve(async (req) => {
     // Build enhanced prompt for AI
     const systemPrompt = `You are an expert subtitle designer specializing in Advanced SubStation Alpha (.ass) format. Create broadcast-quality, professionally styled captions.
 
-🚨🚨🚨 ABSOLUTE CRITICAL REQUIREMENT #1 - READ THIS FIRST 🚨🚨🚨
-════════════════════════════════════════════════════════════════
-
-⛔ SINGLE-LINE MANDATE - THIS IS THE MOST IMPORTANT RULE ⛔
-
-EVERY SINGLE CAPTION MUST APPEAR ON ONE HORIZONTAL STRAIGHT LINE ONLY.
-- NO exceptions, NO multi-line captions, NO line breaks EVER
-- NEVER EVER use \\N tag (this creates line breaks - ABSOLUTELY FORBIDDEN)
-- NEVER EVER use \\n tag (this also creates line breaks - ABSOLUTELY FORBIDDEN)  
-- ALL words in a caption MUST stay on the same horizontal baseline
-- Even if a caption has 10+ words, it MUST be ONE SINGLE STRAIGHT LINE
-- MANDATORY: Use \\q2 tag at the VERY START of EVERY Dialogue Text field
-- MANDATORY: Set WrapStyle: 2 in [Script Info] section
-- MANDATORY: Add MarginL: 50, MarginR: 50 to prevent edge wrapping
-- If you violate this rule, the output will be COMPLETELY REJECTED
-
-TECHNICAL REQUIREMENTS TO PREVENT WRAPPING:
-1. Start EVERY Text field with {\\q2 tag (no-wrap mode)
-2. Use \\pos(x,y) for positioning (not \\move initially)
-3. Set alignment with \\an (1-9) appropriately
-4. DO NOT use automatic line breaking features
-5. Keep all words on ONE HORIZONTAL BASELINE
-
-EXAMPLES:
-✅ CORRECT: {\\q2\\pos(960,950)\\an5}because everyone just invites people
-✅ CORRECT: {\\q2\\pos(960,950)\\an5}the quick brown fox jumps over lazy dog
-✅ CORRECT: {\\q2\\pos(960,100)\\an5}time Bangalore has ever had
-❌ WRONG:  {\\pos(960,950)}because everyone just\\Ninvites people
-❌ WRONG:  {\\pos(960,950)}the quick brown fox\\njumps over lazy dog
-❌ WRONG:  {\\pos(960,950)}time Bangalore has\\Never had
-❌ WRONG:  Any caption that displays text on multiple vertical lines or stacked words
-
-This single-line requirement overrides ALL other styling considerations.
-If you must choose between visual effects and single-line format, 
-ALWAYS choose single-line format. This is non-negotiable and mandatory.
-
-════════════════════════════════════════════════════════════════
-
-OTHER REQUIREMENTS (all secondary to single-line rule):
+CRITICAL REQUIREMENTS:
 1. Generate COMPLETE, VALID .ass file with all required sections
 2. Use V4+ Styles format (most compatible)
 3. Position captions intelligently to avoid faces (typically at y: 300-700)
@@ -85,41 +47,6 @@ OTHER REQUIREMENTS (all secondary to single-line rule):
 5. Emphasize key words with appropriate styling
 6. Ensure perfect readability on all backgrounds
 7. Apply theme-specific visual identity consistently
-8. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
-
-SIMULTANEOUS SPEECH DETECTION:
-- If multiple words overlap in timing (spoken at the same time), they are simultaneous
-- Apply SPECIAL emphasis to simultaneous words:
-  - Make them BOLD (\\b1)
-  - Add scale animation (\\t(0,200,\\fscx120\\fscy120)\\t(200,400,\\fscx100\\fscy100))
-  - Increase font size by 30% (\\fs for the word should be 1.3x default)
-  - Use vibrant theme accent color
-  - Add subtle glow effect with outline
-- This creates a "pop-up" attention-grabbing effect
-
-ANIMATION SYSTEM:
-Apply the "${animation}" animation style to ALL captions:
-
-- **none**: Simple fade (\\fad(200,200))
-- **popup**: Scale from 0 to 100% (\\t(0,150,\\fscx0\\fscy0)\\t(150,300,\\fscx100\\fscy100))
-- **jump**: Bounce effect with position (\\move(x,y-50,x,y,0,200)\\t(200,300,\\fscx110\\fscy110)\\t(300,400,\\fscx100\\fscy100))
-- **slide-left**: Slide from left (\\move(x-300,y,x,y,0,250))
-- **slide-right**: Slide from right (\\move(x+300,y,x,y,0,250))
-- **slide-up**: Slide from bottom (\\move(x,y+100,x,y,0,250))
-- **slide-down**: Slide from top (\\move(x,y-100,x,y,0,250))
-- **fade**: Slow fade in (\\fad(400,400))
-- **zoom**: Zoom from large (\\t(0,250,\\fscx150\\fscy150)\\t(250,400,\\fscx100\\fscy100))
-- **rotate**: Rotate and fade (\\fad(300,300)\\t(0,300,\\frz360))
-- **wave**: Character wave effect (use \\k timing with alternating \\t transforms)
-
-CRITICAL: Apply the selected animation consistently to every caption using appropriate ASS override tags.
-
-TIMING REQUIREMENTS:
-- Natural, smooth timing - NOT rigid or mechanical
-- Typical duration: 4-5 seconds depending on word count and speaking pace
-- Adjust based on word length and natural speech rhythm
-- Allow comfortable reading time for longer captions
-- Don't rush short captions or drag out long ones
 
 POSITIONING STRATEGY (1920x1080 video):
 - Safe zones: Bottom (y: 900-1000), Top (y: 50-150), Sides (x: 50-200, 1720-1870)
@@ -188,13 +115,11 @@ Title: [Theme] Captions
 ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
-WrapStyle: 2
-Collisions: Normal
+WrapStyle: 0
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,[font],36,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,50,50,20,1
-Style: [Create 4 more styles: Emphasis, Strong, Subtle, Simultaneous with MarginL: 50, MarginR: 50]
+Style: [Create 3-5 styles: Default, Emphasis, Strong, Subtle]
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -209,18 +134,12 @@ QUALITY CHECKLIST:
 ✓ Professional typography spacing
 ✓ Smooth timing transitions`;
 
-    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
-
-⚠️ CRITICAL: EXACTLY ONE WORD PER CAPTION - NO EXCEPTIONS ⚠️
-Each word gets its own separate Dialogue line.
-NO multi-word captions. NO \\N tags, NO \\n tags. Use \\q2 in every Dialogue line.
+    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme.
 
 VIDEO DETAILS:
 - Duration: ${videoDuration.toFixed(2)} seconds
 - Resolution: 1920x1080
 - Theme: ${theme}
-- Animation: ${animation}
-- Words per caption: 1 (ONE WORD ONLY)
 - Total words: ${captions.length}
 
 WORD-BY-WORD TRANSCRIPTION:
@@ -228,20 +147,8 @@ ${captions.map((c: Caption, i: number) => {
   const duration = (c.end - c.start).toFixed(2);
   const isLongWord = c.word.length > 8;
   const hasExclamation = c.word.includes('!') || c.word.includes('?');
-  
-  // Check if this word overlaps with others (simultaneous speech)
-  const overlappingWords = captions.filter((other: Caption, j: number) => 
-    i !== j && 
-    ((c.start >= other.start && c.start < other.end) || 
-     (c.end > other.start && c.end <= other.end) ||
-     (c.start <= other.start && c.end >= other.end))
-  );
-  
-  const isSimultaneous = overlappingWords.length > 0;
-  const simultaneousTag = isSimultaneous ? ' [SIMULTANEOUS - BOLD + POP!]' : '';
   const emphasis = isLongWord || hasExclamation ? ' [EMPHASIZE]' : '';
-  
-  return `${String(i + 1).padStart(3, '0')}. "${c.word}" | ${c.start.toFixed(2)}s → ${c.end.toFixed(2)}s (${duration}s)${simultaneousTag}${emphasis}`;
+  return `${String(i + 1).padStart(3, '0')}. "${c.word}" | ${c.start.toFixed(2)}s → ${c.end.toFixed(2)}s (${duration}s)${emphasis}`;
 }).join('\n')}
 
 ${keyframes && keyframes.length > 0 ? `
@@ -252,79 +159,44 @@ ${keyframes.map((kf: Keyframe) =>
 ` : ''}
 
 GENERATION INSTRUCTIONS:
-1. **ONE WORD PER CAPTION - STRICTLY ENFORCED**:
-   - Each word gets its own separate Dialogue line
-   - NEVER combine multiple words into one caption
-   - Each caption timing: Start = word's start time, End = word's end time
-   - Example: If word is "hello", caption shows ONLY "hello", nothing else
-   
-2. Create 5 style definitions:
-   - "Default": Standard caption style with NO word wrapping
+1. Create 4 style definitions:
+   - "Default": Standard caption style
    - "Emphasis": For important words (20% larger, theme accent color)
    - "Strong": For very important words (40% larger, bold, primary theme color)
    - "Subtle": For secondary words (10% smaller, muted color)
-   - "Simultaneous": For overlapping speech (BOLD, 50% larger, vibrant color, thick outline, pop animation)
 
-3. Position each caption (ONE WORD PER LINE):
+2. Position each caption:
    - Analyze timing overlaps
    - Alternate between safe zones (bottom: y=950, top: y=100, left: x=150, right: x=1770)
    - NEVER place at center (y=400-700)
    - Use \\pos(x,y) for precise control
-   - Use \\q2 tag to prevent word wrapping
-   - Each word appears individually
 
-4. Apply emphasis with PRIORITY SYSTEM:
-   - Words marked [SIMULTANEOUS - BOLD + POP!] → HIGHEST PRIORITY, use "Simultaneous" style with:
-     * \\b1 (bold)
-     * \\t(0,200,\\fscx120\\fscy120)\\t(200,400,\\fscx100\\fscy100) (pop animation)
-     * Font size 1.5x default
-     * Vibrant accent color (theme-specific bright color)
-     * Heavy outline (\\bord4)
+3. Apply emphasis:
    - Words marked [EMPHASIZE] → use "Emphasis" or "Strong" style
    - Long words (8+ chars) → slight size increase
    - Question/exclamation marks → "Strong" style
    - Regular words → "Default" style
 
-5. Theme-specific effects + Animation:
+4. Theme-specific effects:
    - Apply theme colors, fonts, and effects consistently
-   - **APPLY "${animation}" ANIMATION to every caption**
-   - Use appropriate ASS override tags for the selected animation
-   - Ensure smooth, professional motion
    - Add appropriate transitions (fades, etc.)
    - Ensure visual coherence throughout
 
-6. Timing precision (NATURAL & SMOOTH):
-   - Use the exact timing provided for each word
-   - Each caption shows for its word's duration only
+5. Timing precision:
+   - Use exact start/end times from transcription
    - Format: 0:00:MM.SS (minutes:seconds.centiseconds)
-   - Smooth transitions between individual words
+   - No gaps or overlaps in dialogue
 
 OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
-- Start with [Script Info] with WrapStyle: 2
+- Start with [Script Info]
 - Include all sections: [V4+ Styles], [Events]
-- **MANDATORY: ONE WORD PER CAPTION - Each word gets its own Dialogue line**
-- **CRITICAL: Every Dialogue line MUST start with \\q2 tag in the Text field**
-- **⛔ ABSOLUTELY FORBIDDEN: Multiple words in one caption OR \\N or \\n tags ⛔**
-- **EACH caption shows EXACTLY ONE WORD - NO EXCEPTIONS**
+- Every word must have a Dialogue line
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
 
-CORRECT FORMAT EXAMPLES (ONE WORD ONLY per line):
-✅ Dialogue: 0,0:00:01.00,0:00:01.30,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because
-✅ Dialogue: 0,0:00:01.30,0:00:01.60,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}everyone
-✅ Dialogue: 0,0:00:01.60,0:00:01.90,Default,,0,0,0,,{\\q2\\an5\\pos(960,100)}just
-✅ Dialogue: 0,0:00:01.90,0:00:02.20,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}invites
-
-FORBIDDEN FORMATS:
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because everyone just (MULTIPLE WORDS - WRONG!)
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because\\Neveryone (LINE BREAK - WRONG!)
-❌ ANY caption with 2+ words
-❌ ANY caption without \\q2 tag
-❌ ANY caption with \\N or \\n tags
-
-Generate the complete .ass file now with SINGLE-LINE captions only:`;
+Generate the complete .ass file now:`;
 
     // Call Lovable AI
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

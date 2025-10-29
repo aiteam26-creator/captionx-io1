@@ -24,10 +24,6 @@ interface Caption {
 interface GlobalCaptionSettingsProps {
   captions: Caption[];
   onApplySettings: (updates: Partial<Caption>) => void;
-  selectedAnimation?: string;
-  onAnimationChange?: (animation: string) => void;
-  wordsPerCaption?: number;
-  onWordsPerCaptionChange?: (words: number) => void;
 }
 
 const FONTS = [
@@ -107,28 +103,7 @@ const COLOR_PRESETS = [
   { name: "Purple", value: "#9B30FF" },
 ];
 
-const ANIMATIONS = [
-  { id: 'none', name: 'No Animation', description: 'Simple fade in/out' },
-  { id: 'popup', name: 'Pop Up', description: 'Scale from small to normal size' },
-  { id: 'jump', name: 'Jump', description: 'Bounce up and settle down' },
-  { id: 'slide-left', name: 'Slide Left to Right', description: 'Enter from left side' },
-  { id: 'slide-right', name: 'Slide Right to Left', description: 'Enter from right side' },
-  { id: 'slide-up', name: 'Slide Up', description: 'Enter from bottom' },
-  { id: 'slide-down', name: 'Slide Down', description: 'Enter from top' },
-  { id: 'fade', name: 'Fade In', description: 'Smooth opacity transition' },
-  { id: 'zoom', name: 'Zoom In', description: 'Scale from large to normal' },
-  { id: 'rotate', name: 'Rotate In', description: 'Spin and fade in' },
-  { id: 'wave', name: 'Wave', description: 'Character-by-character wave effect' }
-];
-
-export const GlobalCaptionSettings = ({ 
-  captions, 
-  onApplySettings,
-  selectedAnimation = 'popup',
-  onAnimationChange,
-  wordsPerCaption = 4,
-  onWordsPerCaptionChange
-}: GlobalCaptionSettingsProps) => {
+export const GlobalCaptionSettings = ({ captions, onApplySettings }: GlobalCaptionSettingsProps) => {
   const { toast } = useToast();
   const [fontSize, setFontSize] = useState(32);
   const [fontFamily, setFontFamily] = useState("Inter");
@@ -303,60 +278,6 @@ export const GlobalCaptionSettings = ({
       </div>
 
       <Separator />
-
-      {/* Caption Settings */}
-      {onAnimationChange && onWordsPerCaptionChange && (
-        <>
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold">Caption Settings</h4>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Animation Style</Label>
-                <Select value={selectedAnimation} onValueChange={onAnimationChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select animation" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {ANIMATIONS.map((anim) => (
-                      <SelectItem key={anim.id} value={anim.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{anim.name}</span>
-                          <span className="text-xs text-muted-foreground">{anim.description}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Words Per Caption</Label>
-                <Select 
-                  value={wordsPerCaption.toString()} 
-                  onValueChange={(v) => onWordsPerCaptionChange(parseInt(v))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num} {num === 1 ? 'word' : 'words'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Each caption will show {wordsPerCaption} words in a single line
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-        </>
-      )}
 
       {/* Preview */}
       <div className="space-y-2">
