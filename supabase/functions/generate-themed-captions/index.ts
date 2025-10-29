@@ -44,26 +44,36 @@ serve(async (req) => {
 
 ⛔ SINGLE-LINE MANDATE - THIS IS THE MOST IMPORTANT RULE ⛔
 
-EVERY SINGLE CAPTION MUST APPEAR ON ONE HORIZONTAL LINE ONLY.
+EVERY SINGLE CAPTION MUST APPEAR ON ONE HORIZONTAL STRAIGHT LINE ONLY.
 - NO exceptions, NO multi-line captions, NO line breaks EVER
-- NEVER use \\N tag (this creates line breaks - FORBIDDEN)
-- NEVER use \\n tag (this also creates line breaks - FORBIDDEN)  
+- NEVER EVER use \\N tag (this creates line breaks - ABSOLUTELY FORBIDDEN)
+- NEVER EVER use \\n tag (this also creates line breaks - ABSOLUTELY FORBIDDEN)  
 - ALL words in a caption MUST stay on the same horizontal baseline
-- Even if a caption has 10+ words, it MUST be ONE SINGLE LINE
-- Use \\q2 tag at the START of EVERY Dialogue Text field
-- Set WrapStyle: 2 in [Script Info] section
-- If you violate this rule, the output will be rejected
+- Even if a caption has 10+ words, it MUST be ONE SINGLE STRAIGHT LINE
+- MANDATORY: Use \\q2 tag at the VERY START of EVERY Dialogue Text field
+- MANDATORY: Set WrapStyle: 2 in [Script Info] section
+- MANDATORY: Add MarginL: 50, MarginR: 50 to prevent edge wrapping
+- If you violate this rule, the output will be COMPLETELY REJECTED
+
+TECHNICAL REQUIREMENTS TO PREVENT WRAPPING:
+1. Start EVERY Text field with {\\q2 tag (no-wrap mode)
+2. Use \\pos(x,y) for positioning (not \\move initially)
+3. Set alignment with \\an (1-9) appropriately
+4. DO NOT use automatic line breaking features
+5. Keep all words on ONE HORIZONTAL BASELINE
 
 EXAMPLES:
-✅ CORRECT: {\\q2\\pos(960,950)}because everyone just invites people
-✅ CORRECT: {\\q2\\pos(960,950)}the quick brown fox jumps over lazy dog
+✅ CORRECT: {\\q2\\pos(960,950)\\an5}because everyone just invites people
+✅ CORRECT: {\\q2\\pos(960,950)\\an5}the quick brown fox jumps over lazy dog
+✅ CORRECT: {\\q2\\pos(960,100)\\an5}time Bangalore has ever had
 ❌ WRONG:  {\\pos(960,950)}because everyone just\\Ninvites people
 ❌ WRONG:  {\\pos(960,950)}the quick brown fox\\njumps over lazy dog
-❌ WRONG:  Any caption that displays text on multiple vertical lines
+❌ WRONG:  {\\pos(960,950)}time Bangalore has\\Never had
+❌ WRONG:  Any caption that displays text on multiple vertical lines or stacked words
 
 This single-line requirement overrides ALL other styling considerations.
 If you must choose between visual effects and single-line format, 
-ALWAYS choose single-line format. This is non-negotiable.
+ALWAYS choose single-line format. This is non-negotiable and mandatory.
 
 ════════════════════════════════════════════════════════════════
 
@@ -179,10 +189,12 @@ ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
 WrapStyle: 2
+Collisions: Normal
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: [Create 3-5 styles: Default, Emphasis, Strong, Subtle]
+Style: Default,[font],36,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,50,50,20,1
+Style: [Create 4 more styles: Emphasis, Strong, Subtle, Simultaneous with MarginL: 50, MarginR: 50]
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -309,14 +321,18 @@ OUTPUT REQUIREMENTS:
 - No markdown formatting, no explanations
 - Ready to save and use immediately
 
-CORRECT FORMAT EXAMPLES (notice \\q2 at start and NO \\N tags):
-✅ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}because everyone just invites people
-✅ Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,{\\q2\\pos(960,950)\\fad(200,200)}it exclusively to themselves only always
-✅ Dialogue: 0,0:00:09.00,0:00:13.00,Default,,0,0,0,,{\\q2\\pos(960,100)}the quick brown fox jumps over the lazy
+CORRECT FORMAT EXAMPLES (notice \\q2\\an5 at start and NO \\N tags):
+✅ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because everyone just invites people
+✅ Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)\\fad(200,200)}it exclusively to themselves only always
+✅ Dialogue: 0,0:00:09.00,0:00:13.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,100)}the quick brown fox jumps over the lazy
+✅ Dialogue: 0,0:00:13.00,0:00:17.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}time Bangalore has ever had
 
-FORBIDDEN FORMATS (these create multiple lines - NEVER DO THIS):
+FORBIDDEN FORMATS (these create multiple lines - NEVER EVER DO THIS):
 ❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because everyone just\\Ninvites people
 ❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,because everyone\\njust invites
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,time Bangalore has\\Never had
+❌ ANY caption without \\q2 tag
+❌ ANY caption with \\N or \\n tags
 
 Generate the complete .ass file now with SINGLE-LINE captions only:`;
 
