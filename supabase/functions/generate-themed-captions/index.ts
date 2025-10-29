@@ -47,6 +47,22 @@ CRITICAL REQUIREMENTS:
 5. Emphasize key words with appropriate styling
 6. Ensure perfect readability on all backgrounds
 7. Apply theme-specific visual identity consistently
+8. **ALL TEXT MUST APPEAR IN A SINGLE LINE - NO LINE BREAKS OR WORD WRAPPING**
+
+SINGLE-LINE TEXT REQUIREMENTS:
+- Every caption MUST be displayed as ONE continuous line
+- NEVER break text into multiple lines
+- Adjust width dynamically based on caption length - it's okay if captions are long
+- Ensure the full caption fits within the frame horizontally
+- Use \\q2 (no word wrapping) in all dialogue lines
+- Professional appearance is priority - keep text clean and readable
+
+TIMING REQUIREMENTS:
+- Natural, smooth timing - NOT rigid or mechanical
+- Typical duration: 4-5 seconds depending on word count and speaking pace
+- Adjust based on word length and natural speech rhythm
+- Allow comfortable reading time for longer captions
+- Don't rush short captions or drag out long ones
 
 POSITIONING STRATEGY (1920x1080 video):
 - Safe zones: Bottom (y: 900-1000), Top (y: 50-150), Sides (x: 50-200, 1720-1870)
@@ -115,7 +131,7 @@ Title: [Theme] Captions
 ScriptType: v4.00+
 PlayResX: 1920
 PlayResY: 1080
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
@@ -160,16 +176,18 @@ ${keyframes.map((kf: Keyframe) =>
 
 GENERATION INSTRUCTIONS:
 1. Create 4 style definitions:
-   - "Default": Standard caption style
+   - "Default": Standard caption style with NO word wrapping
    - "Emphasis": For important words (20% larger, theme accent color)
    - "Strong": For very important words (40% larger, bold, primary theme color)
    - "Subtle": For secondary words (10% smaller, muted color)
 
-2. Position each caption:
+2. Position each caption (SINGLE LINE ONLY):
    - Analyze timing overlaps
    - Alternate between safe zones (bottom: y=950, top: y=100, left: x=150, right: x=1770)
    - NEVER place at center (y=400-700)
    - Use \\pos(x,y) for precise control
+   - Use \\q2 tag to prevent word wrapping
+   - Ensure horizontal space for full caption width
 
 3. Apply emphasis:
    - Words marked [EMPHASIZE] → use "Emphasis" or "Strong" style
@@ -182,19 +200,22 @@ GENERATION INSTRUCTIONS:
    - Add appropriate transitions (fades, etc.)
    - Ensure visual coherence throughout
 
-5. Timing precision:
-   - Use exact start/end times from transcription
+5. Timing precision (NATURAL & SMOOTH):
+   - Aim for 4-5 second duration per caption depending on length
+   - Adjust based on word count: more words = longer duration
+   - Allow natural reading pace - not too fast or slow
    - Format: 0:00:MM.SS (minutes:seconds.centiseconds)
-   - No gaps or overlaps in dialogue
+   - Smooth transitions between captions
 
 OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
-- Start with [Script Info]
+- Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
-- Every word must have a Dialogue line
+- Every caption MUST be a single continuous line (use \\q2 tag)
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
+- ALL captions displayed as single lines with dynamic width
 
 Generate the complete .ass file now:`;
 
