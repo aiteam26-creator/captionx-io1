@@ -19,10 +19,31 @@ export const VideoPreview = ({ captions, currentTime }: VideoPreviewProps) => {
   const [currentCaption, setCurrentCaption] = useState<Caption | null>(null);
 
   useEffect(() => {
-    const caption = captions.find(
+    // Find the current word being spoken
+    const activeCaption = captions.find(
       (c) => currentTime >= c.start && currentTime <= c.end
     );
-    setCurrentCaption(caption || null);
+
+    if (!activeCaption) {
+      setCurrentCaption(null);
+      return;
+    }
+
+    // Get the index of the current word
+    const currentIndex = captions.findIndex(c => c === activeCaption);
+    
+    // Get 2 words before and 2 words after (total 5 words)
+    const startIndex = Math.max(0, currentIndex - 2);
+    const endIndex = Math.min(captions.length, currentIndex + 3);
+    const wordGroup = captions.slice(startIndex, endIndex);
+
+    // Combine the words
+    const combinedText = wordGroup.map(c => c.word).join(' ');
+    
+    setCurrentCaption({
+      ...activeCaption,
+      word: combinedText
+    });
   }, [currentTime, captions]);
 
   return (
