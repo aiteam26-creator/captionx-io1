@@ -260,43 +260,51 @@ export const ThemedCaptionGenerator = ({
         </RadioGroup>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Animation Style</Label>
-        <Select value={selectedAnimation} onValueChange={setSelectedAnimation}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select animation" />
-          </SelectTrigger>
-          <SelectContent>
-            {ANIMATIONS.map((anim) => (
-              <SelectItem key={anim.id} value={anim.id}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{anim.name}</span>
-                  <span className="text-xs text-muted-foreground">{anim.description}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="p-4 space-y-4 bg-muted/50">
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold">Caption Settings</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Animation Style</Label>
+              <Select value={selectedAnimation} onValueChange={setSelectedAnimation}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select animation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ANIMATIONS.map((anim) => (
+                    <SelectItem key={anim.id} value={anim.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{anim.name}</span>
+                        <span className="text-xs text-muted-foreground">{anim.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Words Per Caption</Label>
-        <Select value={wordsPerCaption.toString()} onValueChange={(v) => setWordsPerCaption(parseInt(v))}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-              <SelectItem key={num} value={num.toString()}>
-                {num} {num === 1 ? 'word' : 'words'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Each caption will show {wordsPerCaption} words in a single line
-        </p>
-      </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Words Per Caption</Label>
+              <Select value={wordsPerCaption.toString()} onValueChange={(v) => setWordsPerCaption(parseInt(v))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? 'word' : 'words'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Each caption will show {wordsPerCaption} words in a single line
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       <div className="flex gap-3">
         <Button
