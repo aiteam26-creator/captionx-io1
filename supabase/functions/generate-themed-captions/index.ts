@@ -47,8 +47,19 @@ CRITICAL REQUIREMENTS:
 5. Emphasize key words with appropriate styling
 6. Ensure perfect readability on all backgrounds
 7. Apply theme-specific visual identity consistently
-8. **ALL TEXT MUST APPEAR IN A SINGLE LINE - NO LINE BREAKS OR WORD WRAPPING**
+8. **ABSOLUTELY MANDATORY: ALL TEXT MUST BE IN ONE SINGLE STRAIGHT LINE**
 9. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
+
+⚠️ CRITICAL SINGLE-LINE REQUIREMENT ⚠️
+- EVERY caption MUST be displayed as ONE continuous horizontal line
+- ABSOLUTELY NO line breaks, wrapping, or multi-line text
+- NEVER use \\N or \\n (line break tags) in dialogue text
+- Keep all words on the same horizontal baseline
+- Text should extend horizontally, NOT vertically
+- Use WrapStyle: 2 (end-of-line word wrapping disabled)
+- Add \\q2 tag to EVERY dialogue line to disable word wrapping
+- If caption is long, that's perfectly fine - just keep it horizontal
+- Professional single-line appearance is the top priority
 
 SIMULTANEOUS SPEECH DETECTION:
 - If multiple words overlap in timing (spoken at the same time), they are simultaneous
@@ -59,14 +70,6 @@ SIMULTANEOUS SPEECH DETECTION:
   - Use vibrant theme accent color
   - Add subtle glow effect with outline
 - This creates a "pop-up" attention-grabbing effect
-
-SINGLE-LINE TEXT REQUIREMENTS:
-- Every caption MUST be displayed as ONE continuous line
-- NEVER break text into multiple lines
-- Adjust width dynamically based on caption length - it's okay if captions are long
-- Ensure the full caption fits within the frame horizontally
-- Use \\q2 (no word wrapping) in all dialogue lines
-- Professional appearance is priority - keep text clean and readable
 
 ANIMATION SYSTEM:
 Apply the "${animation}" animation style to ALL captions:
@@ -262,11 +265,13 @@ OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
 - Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
-- Every caption MUST be a single continuous line (use \\q2 tag)
+- **CRITICAL: Every Dialogue line MUST include \\q2 tag at the start of the Text field**
+- **NEVER use \\N or \\n tags (line breaks) in any dialogue**
+- **ALL captions MUST be single horizontal lines**
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
-- ALL captions displayed as single lines with dynamic width
+- Format example: "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\q2\\pos(960,950)}Single line text here"
 
 Generate the complete .ass file now:`;
 
