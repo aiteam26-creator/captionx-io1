@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { theme, animation = 'popup', keyframes, captions, videoDuration } = await req.json();
+    const { theme, animation = 'popup', wordsPerCaption = 4, keyframes, captions, videoDuration } = await req.json();
     
     if (!theme || !captions || !Array.isArray(captions)) {
       throw new Error('Missing required parameters');
@@ -51,15 +51,18 @@ CRITICAL REQUIREMENTS:
 9. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
 
 ⚠️ CRITICAL SINGLE-LINE REQUIREMENT ⚠️
+🚨 NON-NEGOTIABLE RULE: EVERY CAPTION = ONE HORIZONTAL LINE 🚨
 - EVERY caption MUST be displayed as ONE continuous horizontal line
-- ABSOLUTELY NO line breaks, wrapping, or multi-line text
-- NEVER use \\N or \\n (line break tags) in dialogue text
-- Keep all words on the same horizontal baseline
+- ABSOLUTELY NO line breaks, wrapping, or multi-line text under ANY circumstances
+- NEVER EVER use \\N or \\n (line break tags) in dialogue text
+- Keep all words on the same horizontal baseline - NO EXCEPTIONS
 - Text should extend horizontally, NOT vertically
 - Use WrapStyle: 2 (end-of-line word wrapping disabled)
 - Add \\q2 tag to EVERY dialogue line to disable word wrapping
+- Even if caption has 2 words or 10 words - ALWAYS ONE SINGLE LINE
 - If caption is long, that's perfectly fine - just keep it horizontal
-- Professional single-line appearance is the top priority
+- Professional single-line appearance is the absolute top priority
+- THIS IS MANDATORY - DO NOT DEVIATE FROM SINGLE-LINE FORMAT
 
 SIMULTANEOUS SPEECH DETECTION:
 - If multiple words overlap in timing (spoken at the same time), they are simultaneous
@@ -188,7 +191,17 @@ VIDEO DETAILS:
 - Resolution: 1920x1080
 - Theme: ${theme}
 - Animation: ${animation}
+- Words per caption: ${wordsPerCaption}
 - Total words: ${captions.length}
+
+🚨 CRITICAL GROUPING INSTRUCTION 🚨
+Group every ${wordsPerCaption} consecutive words into ONE SINGLE CAPTION LINE.
+- Each caption displays ${wordsPerCaption} words in ONE HORIZONTAL LINE
+- Example: If words are ["it", "exclusively", "to", "themselves", "because"], and wordsPerCaption=3:
+  Caption 1: "it exclusively to" (ONE LINE)
+  Caption 2: "themselves because" (ONE LINE)
+- NEVER split these grouped words across multiple lines
+- The entire group stays on ONE SINGLE HORIZONTAL LINE
 
 WORD-BY-WORD TRANSCRIPTION:
 ${captions.map((c: Caption, i: number) => {
@@ -219,22 +232,29 @@ ${keyframes.map((kf: Keyframe) =>
 ` : ''}
 
 GENERATION INSTRUCTIONS:
-1. Create 5 style definitions:
+1. **GROUP WORDS INTO CAPTIONS**:
+   - Take ${wordsPerCaption} consecutive words and combine them into ONE caption
+   - This forms a single caption line with ${wordsPerCaption} words
+   - Timing: Start = first word's start time, End = last word's end time in group
+   - Example grouping (${wordsPerCaption} words): "${captions.slice(0, wordsPerCaption).map(c => c.word).join(' ')}"
+   
+2. Create 5 style definitions:
    - "Default": Standard caption style with NO word wrapping
    - "Emphasis": For important words (20% larger, theme accent color)
    - "Strong": For very important words (40% larger, bold, primary theme color)
    - "Subtle": For secondary words (10% smaller, muted color)
    - "Simultaneous": For overlapping speech (BOLD, 50% larger, vibrant color, thick outline, pop animation)
 
-2. Position each caption (SINGLE LINE ONLY):
+3. Position each caption (ALWAYS ONE SINGLE HORIZONTAL LINE):
    - Analyze timing overlaps
    - Alternate between safe zones (bottom: y=950, top: y=100, left: x=150, right: x=1770)
    - NEVER place at center (y=400-700)
    - Use \\pos(x,y) for precise control
    - Use \\q2 tag to prevent word wrapping
    - Ensure horizontal space for full caption width
+   - Remember: ${wordsPerCaption} words per caption, ALL ON ONE LINE
 
-3. Apply emphasis with PRIORITY SYSTEM:
+4. Apply emphasis with PRIORITY SYSTEM:
    - Words marked [SIMULTANEOUS - BOLD + POP!] → HIGHEST PRIORITY, use "Simultaneous" style with:
      * \\b1 (bold)
      * \\t(0,200,\\fscx120\\fscy120)\\t(200,400,\\fscx100\\fscy100) (pop animation)
@@ -246,7 +266,7 @@ GENERATION INSTRUCTIONS:
    - Question/exclamation marks → "Strong" style
    - Regular words → "Default" style
 
-4. Theme-specific effects + Animation:
+5. Theme-specific effects + Animation:
    - Apply theme colors, fonts, and effects consistently
    - **APPLY "${animation}" ANIMATION to every caption**
    - Use appropriate ASS override tags for the selected animation
@@ -254,7 +274,7 @@ GENERATION INSTRUCTIONS:
    - Add appropriate transitions (fades, etc.)
    - Ensure visual coherence throughout
 
-5. Timing precision (NATURAL & SMOOTH):
+6. Timing precision (NATURAL & SMOOTH):
    - Aim for 4-5 second duration per caption depending on length
    - Adjust based on word count: more words = longer duration
    - Allow natural reading pace - not too fast or slow
@@ -265,13 +285,14 @@ OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
 - Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
+- **MANDATORY: Group ${wordsPerCaption} words per caption, display as ONE HORIZONTAL LINE**
 - **CRITICAL: Every Dialogue line MUST include \\q2 tag at the start of the Text field**
-- **NEVER use \\N or \\n tags (line breaks) in any dialogue**
-- **ALL captions MUST be single horizontal lines**
+- **NEVER use \\N or \\n tags (line breaks) in any dialogue under ANY circumstances**
+- **ALL captions MUST be single horizontal lines - even with 2 words or 10 words**
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
-- Format example: "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\q2\\pos(960,950)}Single line text here"
+- Format example: "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}it exclusively to themselves" (ONE LINE)
 
 Generate the complete .ass file now:`;
 

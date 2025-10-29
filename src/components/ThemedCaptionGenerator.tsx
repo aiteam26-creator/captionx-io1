@@ -127,6 +127,7 @@ export const ThemedCaptionGenerator = ({
   const { toast } = useToast();
   const [selectedTheme, setSelectedTheme] = useState('cinematic');
   const [selectedAnimation, setSelectedAnimation] = useState('popup');
+  const [wordsPerCaption, setWordsPerCaption] = useState(4);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAssContent, setGeneratedAssContent] = useState<string | null>(null);
 
@@ -163,6 +164,7 @@ export const ThemedCaptionGenerator = ({
         body: {
           theme: selectedTheme,
           animation: selectedAnimation,
+          wordsPerCaption,
           captions,
           keyframes,
           videoDuration: videoRef.current.duration
@@ -275,6 +277,25 @@ export const ThemedCaptionGenerator = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Words Per Caption</Label>
+        <Select value={wordsPerCaption.toString()} onValueChange={(v) => setWordsPerCaption(parseInt(v))}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+              <SelectItem key={num} value={num.toString()}>
+                {num} {num === 1 ? 'word' : 'words'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Each caption will show {wordsPerCaption} words in a single line
+        </p>
       </div>
 
       <div className="flex gap-3">
