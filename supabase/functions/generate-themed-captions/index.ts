@@ -48,6 +48,17 @@ CRITICAL REQUIREMENTS:
 6. Ensure perfect readability on all backgrounds
 7. Apply theme-specific visual identity consistently
 8. **ALL TEXT MUST APPEAR IN A SINGLE LINE - NO LINE BREAKS OR WORD WRAPPING**
+9. **DETECT AND EMPHASIZE SIMULTANEOUS SPEECH WITH BOLD + POP ANIMATION**
+
+SIMULTANEOUS SPEECH DETECTION:
+- If multiple words overlap in timing (spoken at the same time), they are simultaneous
+- Apply SPECIAL emphasis to simultaneous words:
+  - Make them BOLD (\\b1)
+  - Add scale animation (\\t(0,200,\\fscx120\\fscy120)\\t(200,400,\\fscx100\\fscy100))
+  - Increase font size by 30% (\\fs for the word should be 1.3x default)
+  - Use vibrant theme accent color
+  - Add subtle glow effect with outline
+- This creates a "pop-up" attention-grabbing effect
 
 SINGLE-LINE TEXT REQUIREMENTS:
 - Every caption MUST be displayed as ONE continuous line
@@ -163,8 +174,20 @@ ${captions.map((c: Caption, i: number) => {
   const duration = (c.end - c.start).toFixed(2);
   const isLongWord = c.word.length > 8;
   const hasExclamation = c.word.includes('!') || c.word.includes('?');
+  
+  // Check if this word overlaps with others (simultaneous speech)
+  const overlappingWords = captions.filter((other: Caption, j: number) => 
+    i !== j && 
+    ((c.start >= other.start && c.start < other.end) || 
+     (c.end > other.start && c.end <= other.end) ||
+     (c.start <= other.start && c.end >= other.end))
+  );
+  
+  const isSimultaneous = overlappingWords.length > 0;
+  const simultaneousTag = isSimultaneous ? ' [SIMULTANEOUS - BOLD + POP!]' : '';
   const emphasis = isLongWord || hasExclamation ? ' [EMPHASIZE]' : '';
-  return `${String(i + 1).padStart(3, '0')}. "${c.word}" | ${c.start.toFixed(2)}s → ${c.end.toFixed(2)}s (${duration}s)${emphasis}`;
+  
+  return `${String(i + 1).padStart(3, '0')}. "${c.word}" | ${c.start.toFixed(2)}s → ${c.end.toFixed(2)}s (${duration}s)${simultaneousTag}${emphasis}`;
 }).join('\n')}
 
 ${keyframes && keyframes.length > 0 ? `
@@ -175,11 +198,12 @@ ${keyframes.map((kf: Keyframe) =>
 ` : ''}
 
 GENERATION INSTRUCTIONS:
-1. Create 4 style definitions:
+1. Create 5 style definitions:
    - "Default": Standard caption style with NO word wrapping
    - "Emphasis": For important words (20% larger, theme accent color)
    - "Strong": For very important words (40% larger, bold, primary theme color)
    - "Subtle": For secondary words (10% smaller, muted color)
+   - "Simultaneous": For overlapping speech (BOLD, 50% larger, vibrant color, thick outline, pop animation)
 
 2. Position each caption (SINGLE LINE ONLY):
    - Analyze timing overlaps
@@ -189,7 +213,13 @@ GENERATION INSTRUCTIONS:
    - Use \\q2 tag to prevent word wrapping
    - Ensure horizontal space for full caption width
 
-3. Apply emphasis:
+3. Apply emphasis with PRIORITY SYSTEM:
+   - Words marked [SIMULTANEOUS - BOLD + POP!] → HIGHEST PRIORITY, use "Simultaneous" style with:
+     * \\b1 (bold)
+     * \\t(0,200,\\fscx120\\fscy120)\\t(200,400,\\fscx100\\fscy100) (pop animation)
+     * Font size 1.5x default
+     * Vibrant accent color (theme-specific bright color)
+     * Heavy outline (\\bord4)
    - Words marked [EMPHASIZE] → use "Emphasis" or "Strong" style
    - Long words (8+ chars) → slight size increase
    - Question/exclamation marks → "Strong" style
