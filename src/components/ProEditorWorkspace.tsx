@@ -44,6 +44,8 @@ export const ProEditorWorkspace = () => {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedAnimation, setSelectedAnimation] = useState('popup');
+  const [wordsPerCaption, setWordsPerCaption] = useState(4);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -539,6 +541,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             <GlobalCaptionSettings
               captions={captions}
               onApplySettings={handleGlobalCaptionUpdate}
+              selectedAnimation={selectedAnimation}
+              onAnimationChange={setSelectedAnimation}
+              wordsPerCaption={wordsPerCaption}
+              onWordsPerCaptionChange={setWordsPerCaption}
             />
 
             <Separator />
@@ -556,6 +562,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
               captions={captions}
               videoRef={videoRef}
               videoId={videoId || undefined}
+              selectedAnimation={selectedAnimation}
+              onAnimationChange={setSelectedAnimation}
+              wordsPerCaption={wordsPerCaption}
+              onWordsPerCaptionChange={setWordsPerCaption}
             />
           </div>
         </div>
