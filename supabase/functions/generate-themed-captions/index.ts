@@ -211,25 +211,17 @@ QUALITY CHECKLIST:
 
     const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
 
-⚠️ REMINDER: EVERY CAPTION = ONE HORIZONTAL LINE ONLY ⚠️
-NO \\N tags, NO \\n tags, NO line breaks. Use \\q2 in every Dialogue line.
+⚠️ CRITICAL: EXACTLY ONE WORD PER CAPTION - NO EXCEPTIONS ⚠️
+Each word gets its own separate Dialogue line.
+NO multi-word captions. NO \\N tags, NO \\n tags. Use \\q2 in every Dialogue line.
 
 VIDEO DETAILS:
 - Duration: ${videoDuration.toFixed(2)} seconds
 - Resolution: 1920x1080
 - Theme: ${theme}
 - Animation: ${animation}
-- Words per caption: ${wordsPerCaption}
+- Words per caption: 1 (ONE WORD ONLY)
 - Total words: ${captions.length}
-
-🚨 CRITICAL GROUPING INSTRUCTION 🚨
-Group every ${wordsPerCaption} consecutive words into ONE SINGLE CAPTION LINE.
-- Each caption displays ${wordsPerCaption} words in ONE HORIZONTAL LINE
-- Example: If words are ["it", "exclusively", "to", "themselves", "because"], and wordsPerCaption=3:
-  Caption 1: "it exclusively to" (ALL 3 WORDS ON ONE SINGLE LINE - NO BREAKS)
-  Caption 2: "themselves because" (ALL 2 WORDS ON ONE SINGLE LINE - NO BREAKS)
-- NEVER split these grouped words across multiple lines
-- The entire group stays on ONE SINGLE HORIZONTAL LINE with \\q2 tag
 
 WORD-BY-WORD TRANSCRIPTION:
 ${captions.map((c: Caption, i: number) => {
@@ -260,11 +252,11 @@ ${keyframes.map((kf: Keyframe) =>
 ` : ''}
 
 GENERATION INSTRUCTIONS:
-1. **GROUP WORDS INTO CAPTIONS**:
-   - Take ${wordsPerCaption} consecutive words and combine them into ONE caption
-   - This forms a single caption line with ${wordsPerCaption} words
-   - Timing: Start = first word's start time, End = last word's end time in group
-   - Example grouping (${wordsPerCaption} words): "${captions.slice(0, wordsPerCaption).map(c => c.word).join(' ')}"
+1. **ONE WORD PER CAPTION - STRICTLY ENFORCED**:
+   - Each word gets its own separate Dialogue line
+   - NEVER combine multiple words into one caption
+   - Each caption timing: Start = word's start time, End = word's end time
+   - Example: If word is "hello", caption shows ONLY "hello", nothing else
    
 2. Create 5 style definitions:
    - "Default": Standard caption style with NO word wrapping
@@ -273,14 +265,13 @@ GENERATION INSTRUCTIONS:
    - "Subtle": For secondary words (10% smaller, muted color)
    - "Simultaneous": For overlapping speech (BOLD, 50% larger, vibrant color, thick outline, pop animation)
 
-3. Position each caption (ALWAYS ONE SINGLE HORIZONTAL LINE):
+3. Position each caption (ONE WORD PER LINE):
    - Analyze timing overlaps
    - Alternate between safe zones (bottom: y=950, top: y=100, left: x=150, right: x=1770)
    - NEVER place at center (y=400-700)
    - Use \\pos(x,y) for precise control
    - Use \\q2 tag to prevent word wrapping
-   - Ensure horizontal space for full caption width
-   - Remember: ${wordsPerCaption} words per caption, ALL ON ONE LINE
+   - Each word appears individually
 
 4. Apply emphasis with PRIORITY SYSTEM:
    - Words marked [SIMULTANEOUS - BOLD + POP!] → HIGHEST PRIORITY, use "Simultaneous" style with:
@@ -303,34 +294,33 @@ GENERATION INSTRUCTIONS:
    - Ensure visual coherence throughout
 
 6. Timing precision (NATURAL & SMOOTH):
-   - Aim for 4-5 second duration per caption depending on length
-   - Adjust based on word count: more words = longer duration
-   - Allow natural reading pace - not too fast or slow
+   - Use the exact timing provided for each word
+   - Each caption shows for its word's duration only
    - Format: 0:00:MM.SS (minutes:seconds.centiseconds)
-   - Smooth transitions between captions
+   - Smooth transitions between individual words
 
 OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
 - Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
-- **MANDATORY: Group ${wordsPerCaption} words per caption, display as ONE HORIZONTAL LINE**
+- **MANDATORY: ONE WORD PER CAPTION - Each word gets its own Dialogue line**
 - **CRITICAL: Every Dialogue line MUST start with \\q2 tag in the Text field**
-- **⛔ ABSOLUTELY FORBIDDEN: \\N or \\n tags (these create line breaks) ⛔**
-- **ALL captions MUST be single horizontal lines - NO EXCEPTIONS**
+- **⛔ ABSOLUTELY FORBIDDEN: Multiple words in one caption OR \\N or \\n tags ⛔**
+- **EACH caption shows EXACTLY ONE WORD - NO EXCEPTIONS**
 - Use proper .ass syntax
 - No markdown formatting, no explanations
 - Ready to save and use immediately
 
-CORRECT FORMAT EXAMPLES (notice \\q2\\an5 at start and NO \\N tags):
-✅ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because everyone just invites people
-✅ Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)\\fad(200,200)}it exclusively to themselves only always
-✅ Dialogue: 0,0:00:09.00,0:00:13.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,100)}the quick brown fox jumps over the lazy
-✅ Dialogue: 0,0:00:13.00,0:00:17.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}time Bangalore has ever had
+CORRECT FORMAT EXAMPLES (ONE WORD ONLY per line):
+✅ Dialogue: 0,0:00:01.00,0:00:01.30,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because
+✅ Dialogue: 0,0:00:01.30,0:00:01.60,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}everyone
+✅ Dialogue: 0,0:00:01.60,0:00:01.90,Default,,0,0,0,,{\\q2\\an5\\pos(960,100)}just
+✅ Dialogue: 0,0:00:01.90,0:00:02.20,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}invites
 
-FORBIDDEN FORMATS (these create multiple lines - NEVER EVER DO THIS):
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because everyone just\\Ninvites people
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,because everyone\\njust invites
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,time Bangalore has\\Never had
+FORBIDDEN FORMATS:
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because everyone just (MULTIPLE WORDS - WRONG!)
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because\\Neveryone (LINE BREAK - WRONG!)
+❌ ANY caption with 2+ words
 ❌ ANY caption without \\q2 tag
 ❌ ANY caption with \\N or \\n tags
 
