@@ -107,9 +107,16 @@ export const ProEditorWorkspace = () => {
       setProgress(0);
     } catch (error: any) {
       console.error('Transcription error:', error);
+      
+      // Check if it's a file size error
+      const errorMessage = error.message || "An error occurred during transcription";
+      const isFileSizeError = errorMessage.includes("too large") || errorMessage.includes("25MB");
+      
       toast({
-        title: "Transcription failed",
-        description: error.message || "An error occurred during transcription",
+        title: isFileSizeError ? "Video exceeds 25MB limit" : "Transcription failed",
+        description: isFileSizeError 
+          ? "Please use a shorter video or compress it to under 25MB"
+          : errorMessage,
         variant: "destructive",
       });
       setIsProcessing(false);
