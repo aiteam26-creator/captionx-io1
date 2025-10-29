@@ -42,7 +42,7 @@ export const VideoUpload = ({ onVideoSelect }: VideoUploadProps) => {
         Upload a video to automatically generate captions with AI-powered keyword emphasis
       </p>
       <p className="text-xs text-muted-foreground mb-6 text-center">
-        Maximum file size: 25MB
+        Supported formats: MP4, WebM, MPEG • Maximum file size: 25MB
       </p>
       <label htmlFor="video-upload">
         <Button asChild>
@@ -52,7 +52,7 @@ export const VideoUpload = ({ onVideoSelect }: VideoUploadProps) => {
       <input
         id="video-upload"
         type="file"
-        accept="video/*"
+        accept="video/mp4,video/webm,video/mpeg"
         onChange={handleFileChange}
         className="hidden"
       />

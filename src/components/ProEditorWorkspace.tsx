@@ -108,15 +108,25 @@ export const ProEditorWorkspace = () => {
     } catch (error: any) {
       console.error('Transcription error:', error);
       
-      // Check if it's a file size error
+      // Check for specific error types
       const errorMessage = error.message || "An error occurred during transcription";
       const isFileSizeError = errorMessage.includes("too large") || errorMessage.includes("25MB");
+      const isFormatError = errorMessage.includes("format") || errorMessage.includes("MOV") || errorMessage.includes("Supported formats");
+      
+      let title = "Transcription failed";
+      let description = errorMessage;
+      
+      if (isFileSizeError) {
+        title = "Video exceeds 25MB limit";
+        description = "Please use a shorter video or compress it to under 25MB";
+      } else if (isFormatError) {
+        title = "Unsupported video format";
+        description = "Please use MP4, WebM, or MPEG format. MOV files are not supported.";
+      }
       
       toast({
-        title: isFileSizeError ? "Video exceeds 25MB limit" : "Transcription failed",
-        description: isFileSizeError 
-          ? "Please use a shorter video or compress it to under 25MB"
-          : errorMessage,
+        title,
+        description,
         variant: "destructive",
       });
       setIsProcessing(false);

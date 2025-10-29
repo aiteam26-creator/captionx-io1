@@ -108,10 +108,24 @@ serve(async (req) => {
     // Process video in chunks
     const binaryVideo = processBase64Chunks(videoBase64);
     
-    // Prepare form data for Whisper (accepts video files directly)
+    // Prepare form data for Whisper (accepts specific formats only)
+    // Supported: flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm
     const formData = new FormData();
-    const fileExtension = mimeType?.includes('mp4') ? 'mp4' : mimeType?.includes('quicktime') ? 'mov' : 'webm';
-    const blob = new Blob([binaryVideo], { type: mimeType || 'video/webm' });
+    let fileExtension = 'mp4'; // default
+    
+    if (mimeType?.includes('mp4')) {
+      fileExtension = 'mp4';
+    } else if (mimeType?.includes('webm')) {
+      fileExtension = 'webm';
+    } else if (mimeType?.includes('quicktime') || mimeType?.includes('mov')) {
+      throw new Error('MOV format is not supported. Please convert to MP4 or use a different video format.');
+    } else if (mimeType?.includes('mpeg')) {
+      fileExtension = 'mpeg';
+    } else {
+      console.warn('Unknown mime type:', mimeType, '- defaulting to mp4');
+    }
+    
+    const blob = new Blob([binaryVideo], { type: mimeType || 'video/mp4' });
     formData.append('file', blob, `video.${fileExtension}`);
     formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
