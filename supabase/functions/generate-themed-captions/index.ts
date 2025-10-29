@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { theme, keyframes, captions, videoDuration } = await req.json();
+    const { theme, animation = 'popup', keyframes, captions, videoDuration } = await req.json();
     
     if (!theme || !captions || !Array.isArray(captions)) {
       throw new Error('Missing required parameters');
@@ -67,6 +67,23 @@ SINGLE-LINE TEXT REQUIREMENTS:
 - Ensure the full caption fits within the frame horizontally
 - Use \\q2 (no word wrapping) in all dialogue lines
 - Professional appearance is priority - keep text clean and readable
+
+ANIMATION SYSTEM:
+Apply the "${animation}" animation style to ALL captions:
+
+- **none**: Simple fade (\\fad(200,200))
+- **popup**: Scale from 0 to 100% (\\t(0,150,\\fscx0\\fscy0)\\t(150,300,\\fscx100\\fscy100))
+- **jump**: Bounce effect with position (\\move(x,y-50,x,y,0,200)\\t(200,300,\\fscx110\\fscy110)\\t(300,400,\\fscx100\\fscy100))
+- **slide-left**: Slide from left (\\move(x-300,y,x,y,0,250))
+- **slide-right**: Slide from right (\\move(x+300,y,x,y,0,250))
+- **slide-up**: Slide from bottom (\\move(x,y+100,x,y,0,250))
+- **slide-down**: Slide from top (\\move(x,y-100,x,y,0,250))
+- **fade**: Slow fade in (\\fad(400,400))
+- **zoom**: Zoom from large (\\t(0,250,\\fscx150\\fscy150)\\t(250,400,\\fscx100\\fscy100))
+- **rotate**: Rotate and fade (\\fad(300,300)\\t(0,300,\\frz360))
+- **wave**: Character wave effect (use \\k timing with alternating \\t transforms)
+
+CRITICAL: Apply the selected animation consistently to every caption using appropriate ASS override tags.
 
 TIMING REQUIREMENTS:
 - Natural, smooth timing - NOT rigid or mechanical
@@ -161,12 +178,13 @@ QUALITY CHECKLIST:
 ✓ Professional typography spacing
 ✓ Smooth timing transitions`;
 
-    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme.
+    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
 
 VIDEO DETAILS:
 - Duration: ${videoDuration.toFixed(2)} seconds
 - Resolution: 1920x1080
 - Theme: ${theme}
+- Animation: ${animation}
 - Total words: ${captions.length}
 
 WORD-BY-WORD TRANSCRIPTION:
@@ -225,8 +243,11 @@ GENERATION INSTRUCTIONS:
    - Question/exclamation marks → "Strong" style
    - Regular words → "Default" style
 
-4. Theme-specific effects:
+4. Theme-specific effects + Animation:
    - Apply theme colors, fonts, and effects consistently
+   - **APPLY "${animation}" ANIMATION to every caption**
+   - Use appropriate ASS override tags for the selected animation
+   - Ensure smooth, professional motion
    - Add appropriate transitions (fades, etc.)
    - Ensure visual coherence throughout
 
