@@ -4,7 +4,6 @@ import { VideoEditorCanvas } from "./VideoEditorCanvas";
 import { CleanTimeline } from "./CleanTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
-import { ExportModal, ExportFormat } from "./ExportModal";
 import { ExportProgress } from "./ExportProgress";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
@@ -13,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analytics } from "@/utils/analytics";
-import { Download, Film, Settings } from "lucide-react";
+import { Download, Film, Settings, Check, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { optimizeCaptions } from "@/utils/captionPositioning";
@@ -50,10 +49,11 @@ export const ProEditorWorkspace = () => {
   const [videoId, setVideoId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportComplete, setExportComplete] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -197,36 +197,19 @@ export const ProEditorWorkspace = () => {
     setCurrentTime(time);
   };
 
-  const handleExport = async (format: ExportFormat) => {
-    if (format === "video-burned") {
+  const handleExport = async () => {
+    setExportError(null);
+    setExportComplete(false);
+    try {
       await downloadVideoWithCaptions();
-    } else if (format === "srt") {
-      // Generate basic SRT file
-      const srtContent = captions.map((caption, index) => {
-        const startTime = formatSRTTime(caption.start);
-        const endTime = formatSRTTime(caption.end);
-        return `${index + 1}\n${startTime} --> ${endTime}\n${caption.word}\n`;
-      }).join('\n');
-      
-      const blob = new Blob([srtContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'captions.srt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      // Track export success
-      await analytics.trackExportSuccess(undefined, { format: "srt" });
-      
+    } catch (error: any) {
+      console.error('Export error:', error);
+      setExportError(error.message || "Export failed");
       toast({
-        title: "Success! 🎉",
-        description: "SRT subtitle file downloaded",
+        title: "Export failed",
+        description: error.message || "An error occurred during export",
+        variant: "destructive",
       });
-    } else if (format === "ass") {
-      downloadAssFile();
     }
   };
 
@@ -286,7 +269,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   };
 
   const downloadVideoWithCaptions = async () => {
-    if (!videoRef.current || !videoFile) return;
+    if (!videoRef.current || !videoFile) {
+      throw new Error("No video loaded");
+    }
 
     setIsExporting(true);
     setExportProgress(0);
@@ -342,17 +327,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
       setExportProgress(100);
       setExportStatus("Export complete!");
+      setExportComplete(true);
 
       // Track export success
       await analytics.trackExportSuccess(undefined, { format: "video-burned" });
       
-      setTimeout(() => {
-        setIsExporting(false);
-        toast({
-          title: "Success! 🎉",
-          description: "Your video with burned-in captions is ready",
-        });
-      }, 1000);
+      toast({
+        title: "Success! 🎉",
+        description: "Your video with burned-in captions is ready",
+      });
     };
 
     video.currentTime = 0;
@@ -530,9 +513,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           <ThemeToggle size="sm" />
           
           <Button 
-            onClick={() => setExportModalOpen(true)} 
+            onClick={handleExport} 
             size="sm"
-            disabled={captions.length === 0}
+            disabled={captions.length === 0 || isExporting}
             className="gap-2"
           >
             <Download className="w-4 h-4" />
@@ -615,20 +598,85 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         )}
       </div>
 
-      {/* Export Modal */}
-      <ExportModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
-        onExport={handleExport}
-        captionCount={captions.length}
-      />
-
-      {/* Export Progress */}
-      <ExportProgress
-        open={isExporting}
-        progress={exportProgress}
-        status={exportStatus}
-      />
+      {/* Export Progress/Complete Dialog */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
+            {exportComplete ? (
+              <>
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <Check className="w-8 h-8 text-green-500" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-center">Export Complete!</h3>
+                <p className="text-sm text-muted-foreground text-center">{exportStatus}</p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setIsExporting(false);
+                      setExportComplete(false);
+                      setExportProgress(0);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Done
+                  </Button>
+                </div>
+              </>
+            ) : exportError ? (
+              <>
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <X className="w-8 h-8 text-destructive" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-center">Export Failed</h3>
+                <p className="text-sm text-muted-foreground text-center">{exportError}</p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setIsExporting(false);
+                      setExportError(null);
+                      setExportProgress(0);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setExportError(null);
+                      handleExport();
+                    }}
+                    className="flex-1"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-center">Exporting Video</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{exportStatus}</span>
+                    <span className="font-mono font-semibold">{Math.round(exportProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${exportProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

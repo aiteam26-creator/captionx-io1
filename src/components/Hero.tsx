@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "./ThemeToggle";
 import { ArrowRight, Sparkles, Type, Sliders } from "lucide-react";
 
 interface HeroProps {
@@ -9,11 +8,6 @@ interface HeroProps {
 export const Hero = ({ onTryNow }: HeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Theme toggle - top right */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-      
       {/* Subtle gradient background */}
       <div className="absolute inset-0 gradient-accent opacity-60 -z-10" />
       

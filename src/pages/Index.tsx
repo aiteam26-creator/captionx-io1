@@ -3,6 +3,7 @@ import { Hero } from "@/components/Hero";
 import { ProEditorWorkspace } from "@/components/ProEditorWorkspace";
 import { Footer } from "@/components/Footer";
 import { SignInForm } from "@/components/SignInForm";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 
@@ -58,6 +59,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Theme toggle - top right on landing page only */}
+      {!showEditor && (
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+      )}
+      
       <Hero onTryNow={handleTryNow} />
       
       {showEditor && (
