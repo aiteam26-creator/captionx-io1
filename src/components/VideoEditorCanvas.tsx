@@ -45,36 +45,9 @@ export const VideoEditorCanvas = ({
   const [editText, setEditText] = useState("");
 
   const getCurrentCaptions = () => {
-    // Group captions into phrases of 4-5 words
-    const activeCaptions = captions.filter(
-      (caption) => currentTime >= caption.start && currentTime <= caption.end
-    );
-
-    if (activeCaptions.length === 0) return [];
-
-    // Find all words that should be displayed together (within a small time window)
-    const currentWord = activeCaptions[0];
-    const currentIndex = captions.findIndex(c => c === currentWord);
-    
-    // Get 2 words before and 2 words after the current word (total 5 words)
-    const startIndex = Math.max(0, currentIndex - 2);
-    const endIndex = Math.min(captions.length, currentIndex + 3);
-    const wordGroup = captions.slice(startIndex, endIndex);
-
-    // Create a single combined caption
-    const combinedText = wordGroup.map(c => c.word).join(' ');
-    const groupStart = wordGroup[0].start;
-    const groupEnd = wordGroup[wordGroup.length - 1].end;
-
-    return [{
-      caption: {
-        ...currentWord,
-        word: combinedText,
-        start: groupStart,
-        end: groupEnd
-      },
-      index: currentIndex
-    }];
+    return captions
+      .map((caption, index) => ({ caption, index }))
+      .filter(({ caption }) => currentTime >= caption.start && currentTime <= caption.end);
   };
 
   const handleMouseDown = (e: React.MouseEvent, index: number) => {

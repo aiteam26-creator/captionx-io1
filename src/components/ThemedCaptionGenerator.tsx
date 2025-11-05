@@ -6,7 +6,6 @@ import { Sparkles, Download, Loader2 } from "lucide-react";
 import { Card } from "./ui/card";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { getKeyframesForVideo } from "@/utils/keyframeExtractor";
 import { AssPreviewOverlay } from "./AssPreviewOverlay";
 
@@ -20,10 +19,6 @@ interface ThemedCaptionGeneratorProps {
   captions: Caption[];
   videoRef: React.RefObject<HTMLVideoElement>;
   videoId?: string;
-  selectedAnimation?: string;
-  onAnimationChange?: (animation: string) => void;
-  wordsPerCaption?: number;
-  onWordsPerCaptionChange?: (words: number) => void;
 }
 
 const THEMES = [
@@ -65,85 +60,15 @@ const THEMES = [
   }
 ];
 
-const ANIMATIONS = [
-  {
-    id: 'none',
-    name: 'No Animation',
-    description: 'Simple fade in/out'
-  },
-  {
-    id: 'popup',
-    name: 'Pop Up',
-    description: 'Scale from small to normal size'
-  },
-  {
-    id: 'jump',
-    name: 'Jump',
-    description: 'Bounce up and settle down'
-  },
-  {
-    id: 'slide-left',
-    name: 'Slide Left to Right',
-    description: 'Enter from left side'
-  },
-  {
-    id: 'slide-right',
-    name: 'Slide Right to Left',
-    description: 'Enter from right side'
-  },
-  {
-    id: 'slide-up',
-    name: 'Slide Up',
-    description: 'Enter from bottom'
-  },
-  {
-    id: 'slide-down',
-    name: 'Slide Down',
-    description: 'Enter from top'
-  },
-  {
-    id: 'fade',
-    name: 'Fade In',
-    description: 'Smooth opacity transition'
-  },
-  {
-    id: 'zoom',
-    name: 'Zoom In',
-    description: 'Scale from large to normal'
-  },
-  {
-    id: 'rotate',
-    name: 'Rotate In',
-    description: 'Spin and fade in'
-  },
-  {
-    id: 'wave',
-    name: 'Wave',
-    description: 'Character-by-character wave effect'
-  }
-];
-
 export const ThemedCaptionGenerator = ({ 
   captions, 
   videoRef,
-  videoId,
-  selectedAnimation: externalAnimation,
-  onAnimationChange: externalOnAnimationChange,
-  wordsPerCaption: externalWordsPerCaption,
-  onWordsPerCaptionChange: externalOnWordsPerCaptionChange
+  videoId 
 }: ThemedCaptionGeneratorProps) => {
   const { toast } = useToast();
   const [selectedTheme, setSelectedTheme] = useState('cinematic');
-  const [internalAnimation, setInternalAnimation] = useState('popup');
-  const [internalWordsPerCaption, setInternalWordsPerCaption] = useState(4);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAssContent, setGeneratedAssContent] = useState<string | null>(null);
-
-  // Use external state if provided, otherwise use internal state
-  const selectedAnimation = externalAnimation ?? internalAnimation;
-  const setSelectedAnimation = externalOnAnimationChange ?? setInternalAnimation;
-  const wordsPerCaption = externalWordsPerCaption ?? internalWordsPerCaption;
-  const setWordsPerCaption = externalOnWordsPerCaptionChange ?? setInternalWordsPerCaption;
 
   const handleGenerate = async () => {
     if (!videoRef.current || captions.length === 0) {
@@ -177,8 +102,6 @@ export const ThemedCaptionGenerator = ({
       const { data, error } = await supabase.functions.invoke('generate-themed-captions', {
         body: {
           theme: selectedTheme,
-          animation: selectedAnimation,
-          wordsPerCaption,
           captions,
           keyframes,
           videoDuration: videoRef.current.duration

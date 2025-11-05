@@ -44,8 +44,6 @@ export const ProEditorWorkspace = () => {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState("");
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedAnimation, setSelectedAnimation] = useState('popup');
-  const [wordsPerCaption, setWordsPerCaption] = useState(4);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -109,25 +107,9 @@ export const ProEditorWorkspace = () => {
       setProgress(0);
     } catch (error: any) {
       console.error('Transcription error:', error);
-      
-      // Check for specific error types
-      const errorMessage = error.message || "An error occurred during transcription";
-      const isFileSizeError = errorMessage.includes("too large") || errorMessage.includes("25MB");
-      const isFormatError = errorMessage.includes("format") || errorMessage.includes("MOV") || errorMessage.includes("Supported formats");
-      
-      let description = "";
-      
-      if (isFileSizeError) {
-        description = "Transcription failed. Your video file exceeds the 25MB limit. Please use a shorter video or compress it.";
-      } else if (isFormatError) {
-        description = "Transcription failed. MOV format is not allowed. Please convert your video to MP4, WebM, or MPEG format.";
-      } else {
-        description = `Transcription failed. ${errorMessage}`;
-      }
-      
       toast({
         title: "Transcription failed",
-        description,
+        description: error.message || "An error occurred during transcription",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -541,10 +523,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             <GlobalCaptionSettings
               captions={captions}
               onApplySettings={handleGlobalCaptionUpdate}
-              selectedAnimation={selectedAnimation}
-              onAnimationChange={setSelectedAnimation}
-              wordsPerCaption={wordsPerCaption}
-              onWordsPerCaptionChange={setWordsPerCaption}
             />
 
             <Separator />
@@ -562,10 +540,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
               captions={captions}
               videoRef={videoRef}
               videoId={videoId || undefined}
-              selectedAnimation={selectedAnimation}
-              onAnimationChange={setSelectedAnimation}
-              wordsPerCaption={wordsPerCaption}
-              onWordsPerCaptionChange={setWordsPerCaption}
             />
           </div>
         </div>
