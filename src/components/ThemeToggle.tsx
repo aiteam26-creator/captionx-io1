@@ -1,11 +1,5 @@
 import { Moon, Sun, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useTheme } from "@/components/ThemeProvider"
 import { cn } from "@/lib/utils"
 
@@ -15,54 +9,52 @@ interface ThemeToggleProps {
   className?: string
 }
 
-export function ThemeToggle({ variant = "ghost", size = "icon", className }: ThemeToggleProps) {
+export function ThemeToggle({ variant = "ghost", size = "sm", className }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant={variant} 
-          size={size} 
-          className={cn("transition-all duration-200", className)}
-        >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-36">
-        <DropdownMenuItem 
-          onClick={() => setTheme("light")}
-          className={cn(
-            "cursor-pointer gap-2",
-            theme === "light" && "bg-accent"
-          )}
-        >
-          <Sun className="h-4 w-4" />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("dark")}
-          className={cn(
-            "cursor-pointer gap-2",
-            theme === "dark" && "bg-accent"
-          )}
-        >
-          <Moon className="h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("system")}
-          className={cn(
-            "cursor-pointer gap-2",
-            theme === "system" && "bg-accent"
-          )}
-        >
-          <Monitor className="h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className={cn("inline-flex items-center gap-1 p-1 rounded-lg bg-muted/50", className)}>
+      <Button
+        variant={theme === "light" ? "default" : "ghost"}
+        size={size}
+        onClick={() => setTheme("light")}
+        className={cn(
+          "gap-2 transition-all duration-200",
+          theme === "light" && "shadow-sm"
+        )}
+        title="Light Mode"
+      >
+        <Sun className="h-4 w-4" />
+        <span className="text-xs hidden sm:inline">Light</span>
+      </Button>
+
+      <Button
+        variant={theme === "dark" ? "default" : "ghost"}
+        size={size}
+        onClick={() => setTheme("dark")}
+        className={cn(
+          "gap-2 transition-all duration-200",
+          theme === "dark" && "shadow-sm"
+        )}
+        title="Dark Mode"
+      >
+        <Moon className="h-4 w-4" />
+        <span className="text-xs hidden sm:inline">Dark</span>
+      </Button>
+
+      <Button
+        variant={theme === "system" ? "default" : "ghost"}
+        size={size}
+        onClick={() => setTheme("system")}
+        className={cn(
+          "gap-2 transition-all duration-200",
+          theme === "system" && "shadow-sm"
+        )}
+        title="System Theme"
+      >
+        <Monitor className="h-4 w-4" />
+        <span className="text-xs hidden sm:inline">Auto</span>
+      </Button>
+    </div>
   )
 }
