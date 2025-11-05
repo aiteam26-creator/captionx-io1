@@ -476,18 +476,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         {/* Left/Center: Video canvas and timeline */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Video canvas */}
-          <div className="flex-1 p-6 overflow-hidden">
+          <div className="flex-1 p-6 flex items-center justify-center">
             {videoUrl && (
-              <VideoEditorCanvas
-                videoUrl={videoUrl}
-                videoRef={videoRef}
-                captions={captions}
-                currentTime={currentTime}
-                selectedWordIndex={selectedWordIndex}
-                onCaptionDrag={handleCaptionDrag}
-                onCaptionClick={handleCaptionClick}
-                onTimeUpdate={setCurrentTime}
-              />
+              <div className="w-full max-w-5xl">
+                <VideoEditorCanvas
+                  videoUrl={videoUrl}
+                  videoRef={videoRef}
+                  captions={captions}
+                  currentTime={currentTime}
+                  selectedWordIndex={selectedWordIndex}
+                  onCaptionDrag={handleCaptionDrag}
+                  onCaptionClick={handleCaptionClick}
+                  onTimeUpdate={setCurrentTime}
+                />
+              </div>
             )}
           </div>
 
