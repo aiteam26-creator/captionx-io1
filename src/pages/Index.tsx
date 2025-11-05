@@ -59,11 +59,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Theme toggle - top right on landing page only */}
+      {/* Brand name and theme toggle - only on landing page */}
       {!showEditor && (
-        <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
+        <>
+          {/* Brand name - top left */}
+          <div className="fixed top-4 left-4 z-50">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
+              captionx.io
+            </h1>
+          </div>
+          
+          {/* Theme toggle - top right */}
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+        </>
       )}
       
       <Hero onTryNow={handleTryNow} />
