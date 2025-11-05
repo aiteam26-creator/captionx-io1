@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { theme, animation = 'popup', wordsPerCaption = 4, keyframes, captions, videoDuration } = await req.json();
+    const { theme, animation = 'popup', wordsPerCaption = 1, keyframes, captions, videoDuration } = await req.json();
     
     if (!theme || !captions || !Array.isArray(captions)) {
       throw new Error('Missing required parameters');
