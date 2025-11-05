@@ -499,40 +499,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isMobile && (
-            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-              <DrawerTrigger asChild>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="gap-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="hidden sm:inline">Settings</span>
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent className="max-h-[60vh]">
-                <DrawerHeader>
-                  <DrawerTitle>Caption Settings</DrawerTitle>
-                </DrawerHeader>
-                <div className="overflow-y-auto max-h-[calc(60vh-80px)]">
-                  <SettingsContent />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          )}
-          
-          <Button 
-            onClick={() => setExportModalOpen(true)} 
-            size="sm"
-            disabled={captions.length === 0}
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-        </div>
+        <Button 
+          onClick={() => setExportModalOpen(true)} 
+          size="sm"
+          disabled={captions.length === 0}
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          <span className="hidden sm:inline">Export</span>
+        </Button>
       </div>
 
       {/* Main content area */}
@@ -557,7 +532,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             )}
           </div>
 
-          {/* Bottom: Timeline only */}
+          {/* Bottom: Timeline */}
           <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0">
             <CleanTimeline
               captions={captions}
@@ -571,6 +546,27 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
               onCaptionResize={handleCaptionResize}
             />
           </div>
+
+          {/* Mobile: Styling Panel (below timeline, only when word selected) */}
+          {isMobile && selectedWordIndex !== null && (
+            <div className="border-t border-border bg-card flex-shrink-0 overflow-y-auto max-h-[40vh]">
+              <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Styling Controls
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedWordIndex(null)}
+                  className="h-8 w-8 p-0"
+                >
+                  ✕
+                </Button>
+              </div>
+              <SettingsContent />
+            </div>
+          )}
         </div>
 
         {/* Right sidebar: Properties panel (Desktop only) */}
