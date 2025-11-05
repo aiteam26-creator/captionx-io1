@@ -11,10 +11,18 @@ import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Film } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Download, Film, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { optimizeCaptions } from "@/utils/captionPositioning";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface Caption {
   word: string;
@@ -31,6 +39,7 @@ interface Caption {
 
 export const ProEditorWorkspace = () => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
@@ -44,6 +53,7 @@ export const ProEditorWorkspace = () => {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
@@ -449,26 +459,81 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   const duration = videoRef.current?.duration || 0;
   const selectedCaption = selectedWordIndex !== null ? captions[selectedWordIndex] : null;
 
+  // Settings panel content (shared between mobile drawer and desktop sidebar)
+  const SettingsContent = () => (
+    <div className="p-4 space-y-6">
+      {/* Global Settings */}
+      <GlobalCaptionSettings
+        captions={captions}
+        onApplySettings={handleGlobalCaptionUpdate}
+      />
+
+      <Separator />
+
+      {/* Individual Caption Properties */}
+      <PropertiesPanel
+        caption={selectedCaption}
+        onUpdate={handleCaptionUpdate}
+      />
+      
+      <Separator />
+
+      {/* AI Themed Captions */}
+      <ThemedCaptionGenerator
+        captions={captions}
+        videoRef={videoRef}
+        videoId={videoId || undefined}
+      />
+    </div>
+  );
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top toolbar */}
-      <div className="h-14 border-b border-border flex items-center justify-between px-6 bg-card">
-        <div className="flex items-center gap-3">
+      <div className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
+        <div className="flex items-center gap-2 md:gap-3">
           <Film className="w-5 h-5" />
-          <h1 className="text-lg font-semibold">Caption Editor</h1>
-          <Separator orientation="vertical" className="h-6" />
-          <span className="text-sm text-muted-foreground">{videoFile.name}</span>
+          <h1 className="text-base md:text-lg font-semibold">Caption Editor</h1>
+          <Separator orientation="vertical" className="h-6 hidden md:block" />
+          <span className="text-xs md:text-sm text-muted-foreground truncate max-w-[150px] md:max-w-none">
+            {videoFile.name}
+          </span>
         </div>
 
-        <Button 
-          onClick={() => setExportModalOpen(true)} 
-          size="sm"
-          disabled={captions.length === 0}
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </Button>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <DrawerTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="max-h-[60vh]">
+                <DrawerHeader>
+                  <DrawerTitle>Caption Settings</DrawerTitle>
+                </DrawerHeader>
+                <div className="overflow-y-auto max-h-[calc(60vh-80px)]">
+                  <SettingsContent />
+                </div>
+              </DrawerContent>
+            </Drawer>
+          )}
+          
+          <Button 
+            onClick={() => setExportModalOpen(true)} 
+            size="sm"
+            disabled={captions.length === 0}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main content area */}
@@ -476,7 +541,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         {/* Left/Center: Video canvas and timeline */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Video canvas */}
-          <div className="flex-1 p-6 flex items-center justify-center">
+          <div className="flex-1 p-3 md:p-6 flex items-center justify-center">
             {videoUrl && (
               <div className="w-full max-w-5xl">
                 <VideoEditorCanvas
@@ -494,7 +559,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           </div>
 
           {/* Bottom: Keyframe Extractor & Timeline */}
-          <div className="border-t border-border bg-background p-4 flex-shrink-0 space-y-4">
+          <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0 space-y-2 md:space-y-4">
             <KeyframeExtractor
               videoRef={videoRef}
               videoFile={videoFile}
@@ -515,36 +580,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           </div>
         </div>
 
-        {/* Right sidebar: Properties panel */}
-        <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
-          <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
-            <h2 className="text-sm font-semibold">Settings</h2>
+        {/* Right sidebar: Properties panel (Desktop only) */}
+        {!isMobile && (
+          <div className="w-80 border-l border-border bg-background flex-shrink-0 overflow-y-auto">
+            <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-10">
+              <h2 className="text-sm font-semibold">Settings</h2>
+            </div>
+            <SettingsContent />
           </div>
-          <div className="p-4 space-y-6">
-            {/* Global Settings */}
-            <GlobalCaptionSettings
-              captions={captions}
-              onApplySettings={handleGlobalCaptionUpdate}
-            />
-
-            <Separator />
-
-            {/* Individual Caption Properties */}
-            <PropertiesPanel
-              caption={selectedCaption}
-              onUpdate={handleCaptionUpdate}
-            />
-            
-            <Separator />
-
-            {/* AI Themed Captions */}
-            <ThemedCaptionGenerator
-              captions={captions}
-              videoRef={videoRef}
-              videoId={videoId || undefined}
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Export Modal */}
