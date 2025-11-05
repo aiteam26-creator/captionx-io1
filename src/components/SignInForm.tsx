@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/utils/analytics";
 
 interface SignInFormProps {
   onSuccess: () => void;
@@ -61,6 +62,12 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
               variant: "destructive",
             });
           } else {
+            // Track auth success
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await analytics.trackAuthSuccess(user.id);
+            }
+            
             toast({
               title: "Check your email",
               description: "We sent you a login link",
@@ -75,6 +82,12 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
           });
         }
       } else {
+        // Track auth success
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await analytics.trackAuthSuccess(user.id);
+        }
+        
         toast({
           title: "Success",
           description: "Account created successfully",

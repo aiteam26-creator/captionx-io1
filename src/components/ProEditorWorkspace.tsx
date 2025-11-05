@@ -12,6 +12,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { analytics } from "@/utils/analytics";
 import { Download, Film, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -57,11 +58,21 @@ export const ProEditorWorkspace = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleVideoSelect = async (file: File) => {
+    // Track upload started
+    await analytics.trackUploadStarted(undefined, { 
+      fileSize: file.size,
+      fileType: file.type 
+    });
+
     setVideoFile(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
     const id = `video-${Date.now()}`;
     setVideoId(id);
+
+    // Track project created
+    await analytics.trackProjectCreated(undefined, { videoId: id });
+    
     await transcribeVideo(file);
   };
 
@@ -107,6 +118,12 @@ export const ProEditorWorkspace = () => {
       const optimizedCaptions = optimizeCaptions(data.captions);
       setCaptions(optimizedCaptions);
       setProgress(100);
+
+      // Track upload completed
+      await analytics.trackUploadCompleted(undefined, { 
+        captionCount: data.captions.length,
+        videoDuration: videoRef.current?.duration 
+      });
 
       toast({
         title: "Captions generated!",
@@ -200,6 +217,9 @@ export const ProEditorWorkspace = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      // Track export success
+      await analytics.trackExportSuccess(undefined, { format: "srt" });
       
       toast({
         title: "Success! 🎉",
@@ -244,7 +264,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     return assHeader + events;
   };
 
-  const downloadAssFile = () => {
+  const downloadAssFile = async () => {
     const assContent = generateAssContent();
     const blob = new Blob([assContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -255,6 +275,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    // Track export success
+    await analytics.trackExportSuccess(undefined, { format: "ass" });
     
     toast({
       title: "Success! 🎉",
@@ -303,7 +326,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const chunks: Blob[] = [];
     mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
     
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       setExportStatus("Finalizing download...");
       setExportProgress(95);
       
@@ -319,6 +342,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
       setExportProgress(100);
       setExportStatus("Export complete!");
+
+      // Track export success
+      await analytics.trackExportSuccess(undefined, { format: "video-burned" });
       
       setTimeout(() => {
         setIsExporting(false);
