@@ -209,11 +209,24 @@ QUALITY CHECKLIST:
 ✓ Professional typography spacing
 ✓ Smooth timing transitions`;
 
-    const userPrompt = `Create a complete, professional .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
+    const userPrompt = `🚨🚨🚨 CRITICAL INSTRUCTION - READ THIS FIRST 🚨🚨🚨
 
-⚠️ CRITICAL: EXACTLY ONE WORD PER CAPTION - NO EXCEPTIONS ⚠️
-Each word gets its own separate Dialogue line.
-NO multi-word captions. NO \\N tags, NO \\n tags. Use \\q2 in every Dialogue line.
+YOU MUST CREATE EXACTLY ${captions.length} SEPARATE DIALOGUE LINES.
+EACH DIALOGUE LINE = EXACTLY 1 WORD ONLY.
+IF YOU PUT 2+ WORDS IN ONE LINE, THE OUTPUT WILL BE REJECTED.
+
+RULE: ONE WORD = ONE DIALOGUE LINE = ONE CAPTION ON SCREEN
+- Word #1 "${captions[0]?.word}" → Gets its own Dialogue line
+- Word #2 "${captions[1]?.word}" → Gets its own Dialogue line  
+- Word #3 "${captions[2]?.word}" → Gets its own Dialogue line
+- Continue for ALL ${captions.length} words
+
+❌ FORBIDDEN: "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}hello world" (2 WORDS - WRONG!)
+✅ REQUIRED: 
+Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\q2\\pos(960,950)}hello
+Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\q2\\pos(960,950)}world
+
+Create a complete .ass caption file for a ${videoDuration.toFixed(2)}-second video with the "${theme.toUpperCase()}" theme and "${animation.toUpperCase()}" animation style.
 
 VIDEO DETAILS:
 - Duration: ${videoDuration.toFixed(2)} seconds
@@ -252,11 +265,13 @@ ${keyframes.map((kf: Keyframe) =>
 ` : ''}
 
 GENERATION INSTRUCTIONS:
-1. **ONE WORD PER CAPTION - STRICTLY ENFORCED**:
-   - Each word gets its own separate Dialogue line
-   - NEVER combine multiple words into one caption
-   - Each caption timing: Start = word's start time, End = word's end time
-   - Example: If word is "hello", caption shows ONLY "hello", nothing else
+1. **MANDATORY: CREATE ${captions.length} SEPARATE DIALOGUE LINES (ONE PER WORD)**:
+   - You have ${captions.length} words in the transcription above
+   - You MUST create EXACTLY ${captions.length} separate Dialogue lines
+   - Each Dialogue line contains EXACTLY 1 word from the transcription
+   - DO NOT group words together - each word is independent
+   - Timing: Use the exact start/end times provided for each word
+   - If a Dialogue line has 2+ words, IT IS WRONG and will be REJECTED
    
 2. Create 5 style definitions:
    - "Default": Standard caption style with NO word wrapping
@@ -301,30 +316,26 @@ GENERATION INSTRUCTIONS:
 
 OUTPUT REQUIREMENTS:
 - Return ONLY the complete .ass file content
+- Total Dialogue lines MUST equal ${captions.length} (one per word)
 - Start with [Script Info] with WrapStyle: 2
 - Include all sections: [V4+ Styles], [Events]
-- **MANDATORY: ONE WORD PER CAPTION - Each word gets its own Dialogue line**
-- **CRITICAL: Every Dialogue line MUST start with \\q2 tag in the Text field**
-- **⛔ ABSOLUTELY FORBIDDEN: Multiple words in one caption OR \\N or \\n tags ⛔**
-- **EACH caption shows EXACTLY ONE WORD - NO EXCEPTIONS**
-- Use proper .ass syntax
-- No markdown formatting, no explanations
-- Ready to save and use immediately
+- Use proper .ass syntax, no markdown, no explanations
 
-CORRECT FORMAT EXAMPLES (ONE WORD ONLY per line):
+🚨 FINAL VERIFICATION BEFORE GENERATING 🚨
+Count the words in the transcription: ${captions.length} words
+Count the Dialogue lines you will create: MUST BE ${captions.length} lines
+Each Dialogue line Text field: MUST contain exactly 1 word
+
+CORRECT FORMAT (ONE WORD per Dialogue line):
 ✅ Dialogue: 0,0:00:01.00,0:00:01.30,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because
 ✅ Dialogue: 0,0:00:01.30,0:00:01.60,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}everyone
 ✅ Dialogue: 0,0:00:01.60,0:00:01.90,Default,,0,0,0,,{\\q2\\an5\\pos(960,100)}just
-✅ Dialogue: 0,0:00:01.90,0:00:02.20,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}invites
 
-FORBIDDEN FORMATS:
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\an5\\pos(960,950)}because everyone just (MULTIPLE WORDS - WRONG!)
-❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\pos(960,950)}because\\Neveryone (LINE BREAK - WRONG!)
-❌ ANY caption with 2+ words
-❌ ANY caption without \\q2 tag
-❌ ANY caption with \\N or \\n tags
+WRONG FORMATS (THESE WILL BE REJECTED):
+❌ Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,{\\q2\\pos(960,950)}because everyone
+❌ ANY Dialogue line with 2+ words in the Text field
 
-Generate the complete .ass file now with SINGLE-LINE captions only:`;
+Generate ${captions.length} separate Dialogue lines now (one word each):`;
 
     // Call Lovable AI
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
