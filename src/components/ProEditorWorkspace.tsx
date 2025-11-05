@@ -8,6 +8,7 @@ import { ExportModal, ExportFormat } from "./ExportModal";
 import { ExportProgress } from "./ExportProgress";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
+import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -487,9 +488,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   );
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background transition-colors duration-200">
       {/* Top toolbar */}
-      <div className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card">
+      <div className="h-14 border-b border-border flex items-center justify-between px-4 md:px-6 bg-card/95 backdrop-blur-sm">
         <div className="flex items-center gap-2 md:gap-3">
           <Film className="w-5 h-5" />
           <h1 className="text-base md:text-lg font-semibold">Caption Editor</h1>
@@ -499,15 +500,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           </span>
         </div>
 
-        <Button 
-          onClick={() => setExportModalOpen(true)} 
-          size="sm"
-          disabled={captions.length === 0}
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Export</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle size="sm" />
+          
+          <Button 
+            onClick={() => setExportModalOpen(true)} 
+            size="sm"
+            disabled={captions.length === 0}
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main content area */}
@@ -533,7 +538,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           </div>
 
           {/* Bottom: Timeline */}
-          <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0">
+          <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0 transition-all duration-200">
             <CleanTimeline
               captions={captions}
               duration={duration}
@@ -549,22 +554,26 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
           {/* Mobile: Styling Panel (below timeline, only when word selected) */}
           {isMobile && selectedWordIndex !== null && (
-            <div className="border-t border-border bg-card flex-shrink-0 overflow-y-auto max-h-[40vh]">
-              <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+            <div className="border-t-2 border-primary/20 bg-card flex-shrink-0 overflow-hidden animate-slide-in max-h-[45vh]">
+              <div className="sticky top-0 z-10 bg-gradient-to-b from-card to-card/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between shadow-sm">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Styling Controls
+                  <Settings className="w-4 h-4 text-primary" />
+                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    Styling Controls
+                  </span>
                 </h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedWordIndex(null)}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   ✕
                 </Button>
               </div>
-              <SettingsContent />
+              <div className="overflow-y-auto max-h-[calc(45vh-60px)] overscroll-contain">
+                <SettingsContent />
+              </div>
             </div>
           )}
         </div>
