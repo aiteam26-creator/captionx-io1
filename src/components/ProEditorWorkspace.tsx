@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { VideoUpload } from "./VideoUpload";
 import { VideoEditorCanvas } from "./VideoEditorCanvas";
 import { CleanTimeline } from "./CleanTimeline";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analytics } from "@/utils/analytics";
-import { Download, Film, Settings, Check, X } from "lucide-react";
+import { Download, Film, Settings, Check, X, Undo2, Redo2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { optimizeCaptions } from "@/utils/captionPositioning";
@@ -56,6 +56,77 @@ export const ProEditorWorkspace = () => {
   const [exportComplete, setExportComplete] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // History management for undo/redo
+  const [captionHistory, setCaptionHistory] = useState<Caption[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const isUpdatingFromHistory = useRef(false);
+
+  // Save captions to history whenever they change
+  useEffect(() => {
+    if (captions.length > 0 && !isUpdatingFromHistory.current) {
+      const newHistory = captionHistory.slice(0, historyIndex + 1);
+      newHistory.push(JSON.parse(JSON.stringify(captions)));
+      
+      // Limit history to 50 states
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        setCaptionHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      } else {
+        setCaptionHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      }
+    }
+  }, [captions]);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      isUpdatingFromHistory.current = true;
+      setHistoryIndex(historyIndex - 1);
+      setCaptions(JSON.parse(JSON.stringify(captionHistory[historyIndex - 1])));
+      setTimeout(() => {
+        isUpdatingFromHistory.current = false;
+      }, 0);
+      
+      toast({
+        title: "Undone",
+        description: "Reverted to previous caption state",
+      });
+    }
+  }, [historyIndex, captionHistory, toast]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < captionHistory.length - 1) {
+      isUpdatingFromHistory.current = true;
+      setHistoryIndex(historyIndex + 1);
+      setCaptions(JSON.parse(JSON.stringify(captionHistory[historyIndex + 1])));
+      setTimeout(() => {
+        isUpdatingFromHistory.current = false;
+      }, 0);
+      
+      toast({
+        title: "Redone",
+        description: "Restored next caption state",
+      });
+    }
+  }, [historyIndex, captionHistory, toast]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const handleVideoSelect = async (file: File) => {
     // Track upload started
@@ -510,6 +581,33 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Undo/Redo buttons */}
+          <Button
+            onClick={handleUndo}
+            size="sm"
+            variant="ghost"
+            disabled={historyIndex <= 0}
+            title="Undo (Ctrl+Z)"
+            className="gap-1"
+          >
+            <Undo2 className="w-4 h-4" />
+            <span className="hidden md:inline text-xs">Undo</span>
+          </Button>
+          
+          <Button
+            onClick={handleRedo}
+            size="sm"
+            variant="ghost"
+            disabled={historyIndex >= captionHistory.length - 1}
+            title="Redo (Ctrl+Y)"
+            className="gap-1"
+          >
+            <Redo2 className="w-4 h-4" />
+            <span className="hidden md:inline text-xs">Redo</span>
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+          
           <ThemeToggle size="sm" />
           
           <Button 
