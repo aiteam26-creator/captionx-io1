@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/ThemeProvider"
 import { cn } from "@/lib/utils"
@@ -40,20 +40,6 @@ export function ThemeToggle({ variant = "ghost", size = "sm", className }: Theme
       >
         <Moon className="h-4 w-4" />
         <span className="text-xs hidden sm:inline">Dark</span>
-      </Button>
-
-      <Button
-        variant={theme === "system" ? "default" : "ghost"}
-        size={size}
-        onClick={() => setTheme("system")}
-        className={cn(
-          "gap-2 transition-all duration-200",
-          theme === "system" && "shadow-sm"
-        )}
-        title="System Theme"
-      >
-        <Monitor className="h-4 w-4" />
-        <span className="text-xs hidden sm:inline">Auto</span>
       </Button>
     </div>
   )
