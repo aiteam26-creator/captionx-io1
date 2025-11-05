@@ -7,6 +7,8 @@ interface VideoUploadProps {
 }
 
 const SUPPORTED_FORMATS = ['video/mp4', 'video/webm', 'video/mpeg'];
+const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const VideoUpload = ({ onVideoSelect }: VideoUploadProps) => {
   const { toast } = useToast();
@@ -22,6 +24,17 @@ export const VideoUpload = ({ onVideoSelect }: VideoUploadProps) => {
         });
         return;
       }
+      
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        toast({
+          variant: "destructive",
+          title: "File size exceeds 25MB limit",
+          description: `Your video is ${fileSizeMB}MB. Please use a video smaller than 25MB.`
+        });
+        return;
+      }
+      
       onVideoSelect(file);
     }
   };
@@ -33,9 +46,12 @@ export const VideoUpload = ({ onVideoSelect }: VideoUploadProps) => {
       <p className="text-muted-foreground mb-4 text-center max-w-md">
         Upload a video to automatically generate captions with AI-powered keyword emphasis
       </p>
-      <p className="text-sm text-muted-foreground mb-6">
-        Supported formats: MP4, WebM, MPEG
-      </p>
+      <div className="bg-muted/50 rounded-lg p-4 mb-6 text-center">
+        <p className="text-sm font-medium mb-1">Supported Formats</p>
+        <p className="text-sm text-muted-foreground">MP4, WebM, MPEG</p>
+        <p className="text-sm font-medium mt-3 mb-1">Maximum File Size</p>
+        <p className="text-sm text-muted-foreground">25MB</p>
+      </div>
       <label htmlFor="video-upload">
         <Button asChild>
           <span>Choose Video File</span>
