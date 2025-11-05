@@ -6,7 +6,6 @@ import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportModal, ExportFormat } from "./ExportModal";
 import { ExportProgress } from "./ExportProgress";
-import { KeyframeExtractor } from "./KeyframeExtractor";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -558,14 +557,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             )}
           </div>
 
-          {/* Bottom: Keyframe Extractor & Timeline */}
-          <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0 space-y-2 md:space-y-4">
-            <KeyframeExtractor
-              videoRef={videoRef}
-              videoFile={videoFile}
-              captions={captions}
-            />
-            
+          {/* Bottom: Timeline only */}
+          <div className="border-t border-border bg-background p-2 md:p-4 flex-shrink-0">
             <CleanTimeline
               captions={captions}
               duration={duration}
