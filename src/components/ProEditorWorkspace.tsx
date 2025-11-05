@@ -7,6 +7,7 @@ import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportProgress } from "./ExportProgress";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
+import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -509,6 +510,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle size="sm" />
+          
           <Button 
             onClick={handleExport} 
             size="sm"
