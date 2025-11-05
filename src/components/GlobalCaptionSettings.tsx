@@ -82,6 +82,7 @@ const FONTS = [
 const POSITION_PRESETS = [
   { name: "Bottom Center", x: 50, y: 85 },
   { name: "Top Center", x: 50, y: 15 },
+  { name: "Middle Center", x: 50, y: 50 },
   { name: "Bottom Left", x: 15, y: 85 },
   { name: "Bottom Right", x: 85, y: 85 },
   { name: "Top Left", x: 15, y: 15 },
