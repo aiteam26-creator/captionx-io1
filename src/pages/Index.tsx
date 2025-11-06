@@ -16,10 +16,6 @@ const Index = () => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      // Automatically show editor if user is already signed in
-      if (session?.user) {
-        setShowEditor(true);
-      }
     });
 
     // Listen for auth changes
@@ -68,7 +64,7 @@ const Index = () => {
         <>
           {/* Brand name - top left */}
           <div className="fixed top-4 left-4 z-50">
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight animate-fade-in">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
               captionx.io
             </h1>
           </div>
