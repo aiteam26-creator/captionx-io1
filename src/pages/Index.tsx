@@ -16,12 +16,16 @@ const Index = () => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      // If user has active session, show editor directly
+      if (session?.user) {
+        setShowEditor(true);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user && showSignIn) {
+      if (session?.user) {
         setShowSignIn(false);
         setShowEditor(true);
         setTimeout(() => {
@@ -31,7 +35,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [showSignIn]);
+  }, []);
 
   const handleTryNow = () => {
     if (user) {
