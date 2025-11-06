@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { ColorWheelPicker } from "./ColorWheelPicker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CaptionControlsProps {
   fontSize: number;
@@ -123,21 +125,20 @@ export const CaptionControls = ({
       {/* Color */}
       <div className="space-y-2">
         <Label className="text-sm font-semibold">Color</Label>
-        <div className="flex gap-2">
-          <Input
-            type="color"
-            value={color}
-            onChange={(e) => onColorChange(e.target.value)}
-            className="h-12 w-20 cursor-pointer rounded-xl"
-          />
-          <Input
-            type="text"
-            value={color}
-            onChange={(e) => onColorChange(e.target.value)}
-            className="flex-1 rounded-xl"
-            placeholder="#ffffff"
-          />
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start rounded-xl">
+              <div 
+                className="w-6 h-6 rounded-md border mr-2" 
+                style={{ backgroundColor: color }}
+              />
+              <span>{color}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 border-0" align="start">
+            <ColorWheelPicker color={color} onChange={onColorChange} />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Global Controls */}
@@ -148,21 +149,20 @@ export const CaptionControls = ({
           {/* Global Color */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Global Color</Label>
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={globalColor}
-                onChange={(e) => setGlobalColor(e.target.value)}
-                className="h-12 w-20 cursor-pointer rounded-xl"
-              />
-              <Input
-                type="text"
-                value={globalColor}
-                onChange={(e) => setGlobalColor(e.target.value)}
-                className="flex-1 rounded-xl"
-                placeholder="#ffffff"
-              />
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start rounded-xl">
+                  <div 
+                    className="w-6 h-6 rounded-md border mr-2" 
+                    style={{ backgroundColor: globalColor }}
+                  />
+                  <span>{globalColor}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-0" align="start">
+                <ColorWheelPicker color={globalColor} onChange={setGlobalColor} />
+              </PopoverContent>
+            </Popover>
             <Button
               onClick={() => onApplyToAll({ color: globalColor })}
               variant="outline"

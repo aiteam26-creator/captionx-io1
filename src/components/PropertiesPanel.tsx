@@ -4,6 +4,9 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Type, Palette, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ColorWheelPicker } from "./ColorWheelPicker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 interface Caption {
   word: string;
@@ -162,45 +165,23 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
           <div className="space-y-2">
             <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Text Color</Label>
             
-            {/* Color Swatches */}
-            <div className="flex flex-wrap gap-1.5">
-              {COLOR_SWATCHES.map((swatch) => (
-                <button
-                  key={swatch}
-                  onClick={() => onUpdate({ color: swatch })}
-                  className={cn(
-                    "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative group",
-                    caption.color?.toUpperCase() === swatch 
-                      ? "border-foreground shadow-md scale-105" 
-                      : "border-border/40 hover:border-foreground/40"
-                  )}
-                  style={{ backgroundColor: swatch }}
-                  title={swatch}
-                >
-                  {caption.color?.toUpperCase() === swatch && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-            
-            {/* Hex Input */}
-            <div className="flex gap-2 items-center">
-              <Input
-                type="color"
-                value={caption.color || "#ffffff"}
-                onChange={(e) => onUpdate({ color: e.target.value })}
-                className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
-              />
-              <Input
-                value={caption.color || "#ffffff"}
-                onChange={(e) => onUpdate({ color: e.target.value })}
-                className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
-                placeholder="#ffffff"
-              />
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start h-10">
+                  <div 
+                    className="w-6 h-6 rounded-md border mr-2" 
+                    style={{ backgroundColor: caption.color || "#ffffff" }}
+                  />
+                  <span className="font-mono text-xs">{caption.color || "#ffffff"}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-0" align="start">
+                <ColorWheelPicker 
+                  color={caption.color || "#ffffff"} 
+                  onChange={(color) => onUpdate({ color })} 
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Background Color */}
