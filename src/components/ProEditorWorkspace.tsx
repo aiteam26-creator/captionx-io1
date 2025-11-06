@@ -5,7 +5,6 @@ import { CleanTimeline } from "./CleanTimeline";
 import { PropertiesPanel } from "./PropertiesPanel";
 import { CaptionGenerationLoader } from "./CaptionGenerationLoader";
 import { ExportProgress } from "./ExportProgress";
-import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { ThemeToggle } from "./ThemeToggle";
 import { ManualSubtitleEditor } from "./ManualSubtitleEditor";
@@ -730,15 +729,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       <PropertiesPanel
         caption={selectedCaption}
         onUpdate={handleCaptionUpdate}
-      />
-      
-      <Separator />
-
-      {/* AI Themed Captions */}
-      <ThemedCaptionGenerator
-        captions={captions}
-        videoRef={videoRef}
-        videoId={videoId || undefined}
       />
     </div>
   );
