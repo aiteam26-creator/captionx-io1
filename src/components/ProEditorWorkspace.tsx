@@ -8,11 +8,12 @@ import { ExportProgress } from "./ExportProgress";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { ThemeToggle } from "./ThemeToggle";
+import { ManualSubtitleEditor } from "./ManualSubtitleEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analytics } from "@/utils/analytics";
-import { Download, Film, Settings, Check, X, Undo2, Redo2, FolderOpen } from "lucide-react";
+import { Download, Film, Settings, Check, X, Undo2, Redo2, FolderOpen, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -59,6 +60,7 @@ export const ProEditorWorkspace = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("Untitled Video");
+  const [editingManualSubtitle, setEditingManualSubtitle] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // History management for undo/redo
@@ -342,6 +344,71 @@ export const ProEditorWorkspace = () => {
     setCaptions(prev => prev.map((caption, i) => 
       i === index ? { ...caption, start: newStart, end: newEnd } : caption
     ));
+  };
+
+  const handleAddManualSubtitle = () => {
+    const newCaption: Caption = {
+      word: "New subtitle",
+      start: currentTime,
+      end: currentTime + 2,
+      fontSize: captions[0]?.fontSize || 32,
+      fontFamily: captions[0]?.fontFamily || "Inter",
+      color: captions[0]?.color || "#FFFFFF",
+      positionX: 50,
+      positionY: 80,
+    };
+
+    setCaptions(prev => {
+      const newCaptions = [...prev, newCaption].sort((a, b) => a.start - b.start);
+      const newIndex = newCaptions.indexOf(newCaption);
+      setEditingManualSubtitle(newIndex);
+      setSelectedWordIndex(newIndex);
+      return newCaptions;
+    });
+
+    toast({
+      title: "Subtitle added",
+      description: "Click on the subtitle to edit",
+    });
+  };
+
+  const handleManualSubtitleUpdate = (index: number, updates: Partial<Caption>) => {
+    setCaptions(prev => prev.map((caption, i) => 
+      i === index ? { ...caption, ...updates } : caption
+    ));
+    setTimeout(() => saveVideoToDatabase(), 2000);
+  };
+
+  const handleSplitSubtitle = () => {
+    if (selectedWordIndex === null) return;
+
+    const caption = captions[selectedWordIndex];
+    const midpoint = (caption.start + caption.end) / 2;
+    const words = caption.word.split(' ');
+    const halfIndex = Math.ceil(words.length / 2);
+
+    const firstHalf: Caption = {
+      ...caption,
+      word: words.slice(0, halfIndex).join(' '),
+      end: midpoint,
+    };
+
+    const secondHalf: Caption = {
+      ...caption,
+      word: words.slice(halfIndex).join(' '),
+      start: midpoint,
+    };
+
+    setCaptions(prev => {
+      const newCaptions = [...prev];
+      newCaptions.splice(selectedWordIndex, 1, firstHalf, secondHalf);
+      return newCaptions;
+    });
+
+    toast({
+      title: "Subtitle split",
+      description: "Subtitle divided into two parts",
+    });
   };
 
   const handlePlayPause = () => {
@@ -635,6 +702,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   // Settings panel content (shared between mobile drawer and desktop sidebar)
   const SettingsContent = () => (
     <div className="p-4 space-y-6">
+      {/* Manual Subtitle Editor */}
+      {editingManualSubtitle !== null && (
+        <>
+          <ManualSubtitleEditor
+            caption={captions[editingManualSubtitle]}
+            onUpdate={(updates) => handleManualSubtitleUpdate(editingManualSubtitle, updates)}
+            onSplit={handleSplitSubtitle}
+            onClose={() => {
+              setEditingManualSubtitle(null);
+              setSelectedWordIndex(null);
+            }}
+          />
+          <Separator />
+        </>
+      )}
+
       {/* Global Settings */}
       <GlobalCaptionSettings
         captions={captions}
@@ -702,6 +785,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           <Separator orientation="vertical" className="h-6" />
           
           <ThemeToggle size="sm" />
+
+          <Button
+            onClick={handleAddManualSubtitle}
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            disabled={!videoFile}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Add Subtitle</span>
+          </Button>
 
           <Button 
             onClick={() => navigate("/my-videos")}
