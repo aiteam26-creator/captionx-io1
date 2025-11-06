@@ -237,6 +237,7 @@ export const GlobalCaptionSettings = ({ captions, onApplySettings }: GlobalCapti
                 <SelectItem value="rgba(0, 0, 0, 1)">Solid Black</SelectItem>
                 <SelectItem value="rgba(255, 255, 255, 0.5)">Semi-transparent White</SelectItem>
                 <SelectItem value="rgba(255, 255, 255, 0.9)">Light</SelectItem>
+                <SelectItem value="shadow">Shadow</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -277,8 +278,10 @@ export const GlobalCaptionSettings = ({ captions, onApplySettings }: GlobalCapti
               fontFamily,
               fontSize: `${fontSize * 0.5}px`,
               color,
-              backgroundColor,
-              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+              backgroundColor: backgroundColor === "shadow" ? "transparent" : backgroundColor,
+              textShadow: backgroundColor === "shadow" 
+                ? "2px 2px 8px rgba(0,0,0,0.9), -2px -2px 8px rgba(0,0,0,0.9), 2px -2px 8px rgba(0,0,0,0.9), -2px 2px 8px rgba(0,0,0,0.9)" 
+                : "2px 2px 4px rgba(0,0,0,0.8)",
             }}
           >
             Sample Caption

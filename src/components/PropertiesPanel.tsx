@@ -211,7 +211,26 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 )}
               </button>
               
-              {COLOR_SWATCHES.slice(0, 6).map((swatch) => (
+              {/* Shadow Option */}
+              <button
+                onClick={() => onUpdate({ backgroundColor: "shadow" })}
+                className={cn(
+                  "w-7 h-7 rounded-md border-2 transition-all hover:scale-110 relative flex items-center justify-center bg-gradient-to-br from-black/20 to-black/60",
+                  caption.backgroundColor === "shadow"
+                    ? "border-foreground shadow-md scale-105"
+                    : "border-border/40 hover:border-foreground/40"
+                )}
+                title="Shadow"
+              >
+                <span className="text-[8px] font-bold text-white drop-shadow-lg">S</span>
+                {caption.backgroundColor === "shadow" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                  </div>
+                )}
+              </button>
+              
+              {COLOR_SWATCHES.slice(0, 5).map((swatch) => (
                 <button
                   key={swatch}
                   onClick={() => onUpdate({ backgroundColor: swatch + "E6" })}
@@ -240,9 +259,10 @@ export const PropertiesPanel = ({ caption, onUpdate }: PropertiesPanelProps) => 
                 value={caption.backgroundColor?.slice(0, 7) || "#000000"}
                 onChange={(e) => onUpdate({ backgroundColor: e.target.value + "E6" })}
                 className="h-8 w-12 p-0.5 cursor-pointer border-border/60"
+                disabled={caption.backgroundColor === "shadow"}
               />
               <Input
-                value={caption.backgroundColor || "transparent"}
+                value={caption.backgroundColor === "shadow" ? "shadow" : (caption.backgroundColor || "transparent")}
                 onChange={(e) => onUpdate({ backgroundColor: e.target.value })}
                 className="h-8 flex-1 font-mono text-[11px] border-border/60 focus:border-foreground transition-colors bg-background"
                 placeholder="transparent"
