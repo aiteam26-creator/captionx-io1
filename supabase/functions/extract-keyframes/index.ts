@@ -42,10 +42,39 @@ serve(async (req) => {
   }
 
   try {
-    const { frames, videoId, captions } = await req.json();
+    const requestBody = await req.json();
+    const { frames, videoId, captions } = requestBody;
     
+    // Input validation
     if (!frames || !Array.isArray(frames)) {
-      throw new Error('Invalid frames data');
+      return new Response(
+        JSON.stringify({ error: 'Invalid request format', code: 'INVALID_INPUT' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Limit number of frames to prevent resource exhaustion
+    const MAX_FRAMES = 1000;
+    if (frames.length > MAX_FRAMES) {
+      return new Response(
+        JSON.stringify({ error: 'Too many frames. Maximum 1000 frames allowed.', code: 'PAYLOAD_TOO_LARGE' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate videoId format (UUID)
+    if (!videoId || typeof videoId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid video ID', code: 'INVALID_VIDEO_ID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(videoId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid video ID format', code: 'INVALID_UUID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Processing ${frames.length} frames for shot detection`);
