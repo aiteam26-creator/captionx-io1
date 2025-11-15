@@ -109,9 +109,9 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Welcome</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
           <p className="mt-2 text-muted-foreground">
-            Sign in to start creating captioned videos
+            Sign in to continue creating
           </p>
         </div>
         
