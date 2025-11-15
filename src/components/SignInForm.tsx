@@ -120,11 +120,17 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
         });
 
         if (error) {
+          let errorMessage = error.message;
+          
+          if (error.message === "Invalid login credentials") {
+            errorMessage = "Email or password is incorrect. If you don't have an account yet, please sign up first.";
+          } else if (error.message.includes("Email not confirmed")) {
+            errorMessage = "Please verify your email address before signing in.";
+          }
+          
           toast({
-            title: "Login Error",
-            description: error.message === "Invalid login credentials" 
-              ? "Incorrect email or password. Please try again." 
-              : error.message,
+            title: "Login Failed",
+            description: errorMessage,
             variant: "destructive",
           });
         } else if (data.user) {
