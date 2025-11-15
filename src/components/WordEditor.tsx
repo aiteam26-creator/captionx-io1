@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { ColorWheelPicker } from "./ColorWheelPicker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface Caption {
   word: string;
@@ -133,13 +135,23 @@ export const WordEditor = ({ caption, onUpdate }: WordEditorProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="word-color">Color</Label>
-        <Input
-          id="word-color"
-          type="color"
-          value={caption.color || "#ffffff"}
-          onChange={(e) => onUpdate({ color: e.target.value })}
-          className="h-12"
-        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start">
+              <div 
+                className="w-6 h-6 rounded-md border mr-2" 
+                style={{ backgroundColor: caption.color || "#ffffff" }}
+              />
+              <span>{caption.color || "#ffffff"}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 border-0" align="start">
+            <ColorWheelPicker 
+              color={caption.color || "#ffffff"} 
+              onChange={(color) => onUpdate({ color })} 
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">

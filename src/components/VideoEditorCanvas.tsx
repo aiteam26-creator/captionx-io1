@@ -215,8 +215,12 @@ export const VideoEditorCanvas = ({
                           ? "rgba(59, 130, 246, 0.4)" 
                           : isDraggingThis 
                           ? "rgba(59, 130, 246, 0.3)" 
+                          : caption.backgroundColor === "shadow"
+                          ? "transparent"
                           : caption.backgroundColor || "rgba(0, 0, 0, 0.75)",
-                        textShadow: caption.isKeyword 
+                        textShadow: caption.backgroundColor === "shadow"
+                          ? "2px 2px 8px rgba(0,0,0,0.9), -2px -2px 8px rgba(0,0,0,0.9), 2px -2px 8px rgba(0,0,0,0.9), -2px 2px 8px rgba(0,0,0,0.9)"
+                          : caption.isKeyword 
                           ? "0 0 20px rgba(255, 215, 0, 0.8), 3px 3px 12px rgba(0,0,0,0.9)"
                           : "2px 2px 8px rgba(0,0,0,0.9)",
                         border: isSelected 
