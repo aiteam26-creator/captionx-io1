@@ -7,8 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useToast } from "@/hooks/use-toast";
 import { Wand2, RotateCcw } from "lucide-react";
 import { Separator } from "./ui/separator";
-import { ColorWheelPicker } from "./ColorWheelPicker";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface Caption {
   word: string;
@@ -204,20 +202,35 @@ export const GlobalCaptionSettings = ({ captions, onApplySettings }: GlobalCapti
       <div className="space-y-4">
         <div className="space-y-2">
           <Label className="text-sm font-medium">Text Color</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start h-10">
-                <div 
-                  className="w-6 h-6 rounded-md border mr-2" 
-                  style={{ backgroundColor: color }}
-                />
-                <span className="font-mono text-xs">{color}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 border-0" align="start">
-              <ColorWheelPicker color={color} onChange={setColor} />
-            </PopoverContent>
-          </Popover>
+          <div className="grid grid-cols-5 gap-2 mb-3">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                onClick={() => handleQuickColor(preset.value)}
+                className={`
+                  h-10 rounded border-2 transition-all hover:scale-110
+                  ${color === preset.value ? 'border-primary ring-2 ring-primary/20' : 'border-border'}
+                `}
+                style={{ backgroundColor: preset.value }}
+                title={preset.name}
+              />
+            ))}
+          </div>
+          <div className="flex gap-2 items-center">
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-10 w-20 rounded border cursor-pointer"
+            />
+            <input
+              type="text"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
+              placeholder="#FFFFFF"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
