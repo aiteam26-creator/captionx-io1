@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminUsage from "./pages/admin/Usage";
 import AdminEvents from "./pages/admin/Events";
-import MyVideos from "./pages/MyVideos";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +20,6 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/my-videos" element={<MyVideos />} />
             <Route path="/admin/usage" element={<AdminUsage />} />
             <Route path="/admin/events" element={<AdminEvents />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

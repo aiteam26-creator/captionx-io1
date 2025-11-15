@@ -146,50 +146,6 @@ export type Database = {
         }
         Relationships: []
       }
-      videos: {
-        Row: {
-          captions: Json | null
-          created_at: string
-          duration: number | null
-          id: string
-          thumbnail_url: string | null
-          title: string
-          updated_at: string
-          user_id: string
-          video_url: string
-        }
-        Insert: {
-          captions?: Json | null
-          created_at?: string
-          duration?: number | null
-          id?: string
-          thumbnail_url?: string | null
-          title: string
-          updated_at?: string
-          user_id: string
-          video_url: string
-        }
-        Update: {
-          captions?: Json | null
-          created_at?: string
-          duration?: number | null
-          id?: string
-          thumbnail_url?: string | null
-          title?: string
-          updated_at?: string
-          user_id?: string
-          video_url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_user"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
     }
     Views: {
       analytics_dau: {

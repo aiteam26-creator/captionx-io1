@@ -8,13 +8,11 @@ import { ExportProgress } from "./ExportProgress";
 import { ThemedCaptionGenerator } from "./ThemedCaptionGenerator";
 import { GlobalCaptionSettings } from "./GlobalCaptionSettings";
 import { ThemeToggle } from "./ThemeToggle";
-import { ManualSubtitleEditor } from "./ManualSubtitleEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analytics } from "@/utils/analytics";
-import { Download, Film, Settings, Check, X, Undo2, Redo2, FolderOpen, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Download, Film, Settings, Check, X, Undo2, Redo2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { optimizeCaptions } from "@/utils/captionPositioning";
@@ -42,7 +40,6 @@ interface Caption {
 export const ProEditorWorkspace = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
@@ -58,9 +55,6 @@ export const ProEditorWorkspace = () => {
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportComplete, setExportComplete] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const [videoTitle, setVideoTitle] = useState<string>("Untitled Video");
-  const [editingManualSubtitle, setEditingManualSubtitle] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // History management for undo/redo
@@ -118,28 +112,6 @@ export const ProEditorWorkspace = () => {
     }
   }, [historyIndex, captionHistory, toast]);
 
-  // Load video from sessionStorage if available
-  useEffect(() => {
-    const loadVideoData = sessionStorage.getItem("loadVideo");
-    if (loadVideoData) {
-      try {
-        const videoData = JSON.parse(loadVideoData);
-        setCurrentVideoId(videoData.id);
-        setVideoTitle(videoData.title);
-        setVideoUrl(videoData.video_url);
-        setCaptions(videoData.captions || []);
-        sessionStorage.removeItem("loadVideo");
-        
-        toast({
-          title: "Video loaded",
-          description: `Editing: ${videoData.title}`,
-        });
-      } catch (error) {
-        console.error("Error loading video:", error);
-      }
-    }
-  }, []);
-
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -168,72 +140,11 @@ export const ProEditorWorkspace = () => {
     setVideoUrl(url);
     const id = `video-${Date.now()}`;
     setVideoId(id);
-    setVideoTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove file extension
 
     // Track project created
     await analytics.trackProjectCreated(undefined, { videoId: id });
     
     await transcribeVideo(file);
-  };
-
-  const saveVideoToDatabase = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !videoFile || !videoUrl) return;
-
-      // Upload video to storage
-      const fileName = `${user.id}/${Date.now()}-${videoFile.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("videos")
-        .upload(fileName, videoFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("videos")
-        .getPublicUrl(fileName);
-
-      // Save or update video record
-      const videoData = {
-        user_id: user.id,
-        title: videoTitle,
-        video_url: publicUrl,
-        captions: JSON.parse(JSON.stringify(captions)) as any,
-        duration: videoRef.current?.duration || null,
-      };
-
-      if (currentVideoId) {
-        // Update existing video
-        const { error } = await supabase
-          .from("videos")
-          .update(videoData)
-          .eq("id", currentVideoId);
-        
-        if (error) throw error;
-      } else {
-        // Create new video
-        const { data, error } = await supabase
-          .from("videos")
-          .insert(videoData)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        setCurrentVideoId(data.id);
-      }
-
-      toast({
-        title: "Video saved",
-        description: "Your work has been saved successfully",
-      });
-    } catch (error) {
-      console.error("Error saving video:", error);
-      toast({
-        title: "Save failed",
-        description: "Could not save your video. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   const fileToBase64 = async (file: File): Promise<string> => {
@@ -292,9 +203,6 @@ export const ProEditorWorkspace = () => {
 
       setIsProcessing(false);
       setProgress(0);
-
-      // Auto-save video after captions are generated
-      setTimeout(() => saveVideoToDatabase(), 1000);
     } catch (error: any) {
       console.error('Transcription error:', error);
       toast({
@@ -328,9 +236,6 @@ export const ProEditorWorkspace = () => {
     setCaptions(prev => prev.map((caption, i) => 
       i === selectedWordIndex ? { ...caption, ...updates } : caption
     ));
-
-    // Auto-save after caption update
-    setTimeout(() => saveVideoToDatabase(), 2000);
   };
 
   const handleGlobalCaptionUpdate = (updates: Partial<Caption>) => {
@@ -344,71 +249,6 @@ export const ProEditorWorkspace = () => {
     setCaptions(prev => prev.map((caption, i) => 
       i === index ? { ...caption, start: newStart, end: newEnd } : caption
     ));
-  };
-
-  const handleAddManualSubtitle = () => {
-    const newCaption: Caption = {
-      word: "New subtitle",
-      start: currentTime,
-      end: currentTime + 2,
-      fontSize: captions[0]?.fontSize || 32,
-      fontFamily: captions[0]?.fontFamily || "Inter",
-      color: captions[0]?.color || "#FFFFFF",
-      positionX: 50,
-      positionY: 80,
-    };
-
-    setCaptions(prev => {
-      const newCaptions = [...prev, newCaption].sort((a, b) => a.start - b.start);
-      const newIndex = newCaptions.indexOf(newCaption);
-      setEditingManualSubtitle(newIndex);
-      setSelectedWordIndex(newIndex);
-      return newCaptions;
-    });
-
-    toast({
-      title: "Subtitle added",
-      description: "Click on the subtitle to edit",
-    });
-  };
-
-  const handleManualSubtitleUpdate = (index: number, updates: Partial<Caption>) => {
-    setCaptions(prev => prev.map((caption, i) => 
-      i === index ? { ...caption, ...updates } : caption
-    ));
-    setTimeout(() => saveVideoToDatabase(), 2000);
-  };
-
-  const handleSplitSubtitle = () => {
-    if (selectedWordIndex === null) return;
-
-    const caption = captions[selectedWordIndex];
-    const midpoint = (caption.start + caption.end) / 2;
-    const words = caption.word.split(' ');
-    const halfIndex = Math.ceil(words.length / 2);
-
-    const firstHalf: Caption = {
-      ...caption,
-      word: words.slice(0, halfIndex).join(' '),
-      end: midpoint,
-    };
-
-    const secondHalf: Caption = {
-      ...caption,
-      word: words.slice(halfIndex).join(' '),
-      start: midpoint,
-    };
-
-    setCaptions(prev => {
-      const newCaptions = [...prev];
-      newCaptions.splice(selectedWordIndex, 1, firstHalf, secondHalf);
-      return newCaptions;
-    });
-
-    toast({
-      title: "Subtitle split",
-      description: "Subtitle divided into two parts",
-    });
   };
 
   const handlePlayPause = () => {
@@ -702,22 +542,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   // Settings panel content (shared between mobile drawer and desktop sidebar)
   const SettingsContent = () => (
     <div className="p-4 space-y-6">
-      {/* Manual Subtitle Editor */}
-      {editingManualSubtitle !== null && (
-        <>
-          <ManualSubtitleEditor
-            caption={captions[editingManualSubtitle]}
-            onUpdate={(updates) => handleManualSubtitleUpdate(editingManualSubtitle, updates)}
-            onSplit={handleSplitSubtitle}
-            onClose={() => {
-              setEditingManualSubtitle(null);
-              setSelectedWordIndex(null);
-            }}
-          />
-          <Separator />
-        </>
-      )}
-
       {/* Global Settings */}
       <GlobalCaptionSettings
         captions={captions}
@@ -785,27 +609,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           <Separator orientation="vertical" className="h-6" />
           
           <ThemeToggle size="sm" />
-
-          <Button
-            onClick={handleAddManualSubtitle}
-            variant="ghost"
-            size="sm"
-            className="gap-2"
-            disabled={!videoFile}
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Subtitle</span>
-          </Button>
-
-          <Button 
-            onClick={() => navigate("/my-videos")}
-            variant="ghost"
-            size="sm"
-            className="gap-2"
-          >
-            <FolderOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">My Videos</span>
-          </Button>
           
           <Button 
             onClick={handleExport} 
