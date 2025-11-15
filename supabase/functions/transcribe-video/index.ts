@@ -83,33 +83,7 @@ serve(async (req) => {
   }
 
   try {
-    const requestBody = await req.json();
-    const { videoBase64, mimeType } = requestBody;
-    
-    // Input validation
-    if (!videoBase64 || typeof videoBase64 !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Invalid request format', code: 'INVALID_INPUT' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate MIME type
-    const validMimeTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
-    if (!mimeType || !validMimeTypes.includes(mimeType)) {
-      return new Response(
-        JSON.stringify({ error: 'Unsupported video format', code: 'INVALID_MIME_TYPE' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Validate base64 format (basic check)
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(videoBase64.substring(0, 100))) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid video data', code: 'INVALID_FORMAT' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { videoBase64, mimeType } = await req.json();
     
     if (!videoBase64) {
       throw new Error('No video data provided');
@@ -167,13 +141,9 @@ serve(async (req) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        // Log detailed error server-side only
-        console.error('OpenAI API error:', {
-          status: response.status,
-          details: errorText,
-          timestamp: new Date().toISOString()
-        });
-        throw new Error('External service error');
+        console.error('OpenAI API error status:', response.status);
+        console.error('OpenAI API error details:', errorText);
+        throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
       }
 
       result = await response.json();
@@ -235,19 +205,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    // Detailed logging server-side only
-    console.error('Transcription failed:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    
-    // Generic error message to client
+    console.error('Error in transcribe-video function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ 
-        error: 'Transcription failed. Please try again or contact support.',
-        code: 'TRANSCRIPTION_ERROR'
-      }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
