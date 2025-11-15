@@ -5,8 +5,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
-import { Mail } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 interface SignInFormProps {
   onSuccess: () => void;
@@ -19,38 +17,6 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-        setLoading(false);
-      }
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to sign in with Google",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,31 +121,8 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             {isSignUp ? "Sign up to start creating captioned videos" : "Sign in to continue creating"}
           </p>
         </div>
-
-        <div className="mt-8 space-y-6">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <Mail className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with email
-              </span>
-            </div>
-          </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             {isSignUp && (
               <div>
@@ -242,7 +185,6 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             </button>
           </div>
         </form>
-        </div>
       </div>
     </div>
   );
