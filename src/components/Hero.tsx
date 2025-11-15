@@ -1,11 +1,52 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ArrowRight, Sparkles, Type, Sliders } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HeroProps {
   onTryNow: () => void;
 }
 
 export const Hero = ({ onTryNow }: HeroProps) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name.trim() || !email.trim()) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_contacts')
+        .insert([{ name: name.trim(), email: email.trim(), phone: '' }]);
+
+      if (error) throw error;
+
+      toast.success("Thanks! Starting the editor...");
+      setName("");
+      setEmail("");
+      
+      // Trigger editor after short delay
+      setTimeout(() => {
+        onTryNow();
+      }, 500);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Subtle gradient background */}
@@ -37,16 +78,43 @@ export const Hero = ({ onTryNow }: HeroProps) => {
           Edit every word with precision. Choose from 30+ fonts, adjust sizes, colors, and position captions exactly where they belong.
         </p>
 
-        {/* CTA */}
-        <div className="flex justify-center mb-24 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <Button
-            onClick={onTryNow}
-            size="lg"
-            className="h-14 px-8 text-base font-medium hover-lift group"
-          >
-            Start Creating
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-          </Button>
+        {/* Contact Form */}
+        <div className="max-w-md mx-auto mb-24 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-2xl glass">
+            <div>
+              <Label htmlFor="name">Your Name</Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
+                required
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Your Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="mt-1.5"
+              />
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-12 text-base font-medium hover-lift group"
+              disabled={loading}
+            >
+              {loading ? "Starting..." : "Start Creating"}
+              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+            </Button>
+          </form>
         </div>
 
         {/* Feature cards */}
