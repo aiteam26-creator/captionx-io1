@@ -13,27 +13,16 @@ interface SignInFormProps {
 export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim()) {
       toast({
         title: "Required fields",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isSignUp && !name.trim()) {
-      toast({
-        title: "Required fields",
-        description: "Please enter your name",
+        description: "Please enter both name and email",
         variant: "destructive",
       });
       return;
@@ -42,62 +31,68 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
     setLoading(true);
     
     try {
-      if (isSignUp) {
-        // Sign up new user
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password.trim(),
-          options: {
-            data: {
-              name: name.trim(),
-            },
-            emailRedirectTo: `${window.location.origin}/`,
+      // Generate a random password for the user since we only collect name and email
+      const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+      
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: randomPassword,
+        options: {
+          data: {
+            name: name.trim(),
           },
-        });
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
 
-        if (error) {
+      if (error) {
+        if (error.message.includes("already registered")) {
+          // User exists, try to sign in
+          const { error: signInError } = await supabase.auth.signInWithOtp({
+            email: email.trim(),
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+            },
+          });
+
+          if (signInError) {
+            toast({
+              title: "Error",
+              description: signInError.message,
+              variant: "destructive",
+            });
+          } else {
+            // Track auth success
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await analytics.trackAuthSuccess(user.id);
+            }
+            
+            toast({
+              title: "Check your email",
+              description: "We sent you a login link",
+            });
+            onSuccess();
+          }
+        } else {
           toast({
             title: "Error",
             description: error.message,
             variant: "destructive",
           });
-        } else {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await analytics.trackAuthSuccess(user.id);
-          }
-          
-          toast({
-            title: "Success",
-            description: "Account created successfully! Please check your email to verify.",
-          });
-          onSuccess();
         }
       } else {
-        // Sign in existing user with password
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password.trim(),
-        });
-
-        if (error) {
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await analytics.trackAuthSuccess(user.id);
-          }
-          
-          toast({
-            title: "Success",
-            description: "Signed in successfully!",
-          });
-          onSuccess();
+        // Track auth success
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await analytics.trackAuthSuccess(user.id);
         }
+        
+        toast({
+          title: "Success",
+          description: "Account created successfully",
+        });
+        onSuccess();
       }
     } catch (err) {
       toast({
@@ -114,30 +109,26 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">
-            {isSignUp ? "Create Account" : "Welcome Back"}
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight">Welcome</h2>
           <p className="mt-2 text-muted-foreground">
-            {isSignUp ? "Sign up to start creating captioned videos" : "Sign in to continue creating"}
+            Sign in to start creating captioned videos
           </p>
         </div>
         
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
-            {isSignUp && (
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  required
-                  className="mt-1"
-                />
-              </div>
-            )}
+            <div>
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
+                required
+                className="mt-1"
+              />
+            </div>
             
             <div>
               <Label htmlFor="email">Email *</Label>
@@ -151,20 +142,6 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
                 className="mt-1"
               />
             </div>
-
-            <div>
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                minLength={6}
-                className="mt-1"
-              />
-            </div>
           </div>
 
           <Button
@@ -172,18 +149,8 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             className="w-full"
             disabled={loading}
           >
-            {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Sign Up" : "Sign In")}
+            {loading ? "Signing in..." : "Continue"}
           </Button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-primary hover:underline"
-            >
-              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-            </button>
-          </div>
         </form>
       </div>
     </div>

@@ -19,7 +19,6 @@ interface Caption {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
-  backgroundColor?: string;
   positionX?: number;
   positionY?: number;
 }
@@ -601,12 +600,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                             fontFamily: selectedCaption.fontFamily || "Inter",
                             fontSize: `${selectedCaption.fontSize || 32}px`,
                             color: selectedCaption.color || "#ffffff",
-                            backgroundColor: selectedCaption.backgroundColor === "shadow" 
-                              ? "transparent" 
-                              : selectedCaption.backgroundColor,
-                            textShadow: selectedCaption.backgroundColor === "shadow"
-                              ? "2px 2px 8px rgba(0,0,0,0.9), -2px -2px 8px rgba(0,0,0,0.9), 2px -2px 8px rgba(0,0,0,0.9), -2px 2px 8px rgba(0,0,0,0.9)"
-                              : "2px 2px 4px rgba(0,0,0,0.8)",
+                            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
                           }}
                         >
                           {selectedCaption.word}
@@ -648,14 +642,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                                 fontSize: `${caption.fontSize || 32}px`,
                                 color: caption.color || "#ffffff",
                                 fontWeight: isCurrentWord ? "bold" : "normal",
-                                backgroundColor: isCurrentWord 
-                                  ? "rgba(59, 130, 246, 0.8)" 
-                                  : caption.backgroundColor === "shadow"
-                                  ? "transparent"
-                                  : caption.backgroundColor || "transparent",
-                                textShadow: caption.backgroundColor === "shadow"
-                                  ? "2px 2px 8px rgba(0,0,0,0.9), -2px -2px 8px rgba(0,0,0,0.9), 2px -2px 8px rgba(0,0,0,0.9), -2px 2px 8px rgba(0,0,0,0.9)"
-                                  : "3px 3px 6px rgba(0,0,0,0.9)",
+                                textShadow: "3px 3px 6px rgba(0,0,0,0.9)",
+                                backgroundColor: isCurrentWord ? "rgba(59, 130, 246, 0.8)" : "transparent",
                                 padding: isCurrentWord ? "6px 14px" : "2px 4px",
                                 borderRadius: isCurrentWord ? "10px" : "0",
                                 display: "inline-block",

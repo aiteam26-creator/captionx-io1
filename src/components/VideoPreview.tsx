@@ -8,7 +8,6 @@ interface Caption {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
-  backgroundColor?: string;
 }
 
 interface VideoPreviewProps {
@@ -37,24 +36,15 @@ export const VideoPreview = ({ captions, currentTime }: VideoPreviewProps) => {
       {currentCaption && (
         <div 
           className="absolute inset-x-0 bottom-0 pb-8 flex items-center justify-center"
+          style={{
+            fontFamily: currentCaption.fontFamily || "Inter",
+            fontSize: `${currentCaption.fontSize || 32}px`,
+            color: currentCaption.color || "#ffffff",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+            fontWeight: currentCaption.isKeyword ? "bold" : "normal",
+          }}
         >
-          <div
-            className="px-4 py-2 rounded-lg"
-            style={{
-              fontFamily: currentCaption.fontFamily || "Inter",
-              fontSize: `${currentCaption.fontSize || 32}px`,
-              color: currentCaption.color || "#ffffff",
-              backgroundColor: currentCaption.backgroundColor === "shadow" 
-                ? "transparent" 
-                : currentCaption.backgroundColor || "rgba(0, 0, 0, 0.75)",
-              textShadow: currentCaption.backgroundColor === "shadow"
-                ? "2px 2px 8px rgba(0,0,0,0.9), -2px -2px 8px rgba(0,0,0,0.9), 2px -2px 8px rgba(0,0,0,0.9), -2px 2px 8px rgba(0,0,0,0.9)"
-                : "2px 2px 4px rgba(0,0,0,0.8)",
-              fontWeight: currentCaption.isKeyword ? "bold" : "normal",
-            }}
-          >
-            {currentCaption.word}
-          </div>
+          {currentCaption.word}
         </div>
       )}
     </div>
