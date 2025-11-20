@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { analytics } from "@/utils/analytics";
-import { Download, Film, Settings, Check, X, Undo2, Redo2, FolderOpen, Plus } from "lucide-react";
+import { Download, Film, Settings, Check, X, Undo2, Redo2, FolderOpen, Plus, LogOut, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -24,6 +24,16 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { User } from "@supabase/supabase-js";
 
 interface Caption {
   word: string;
@@ -48,6 +58,7 @@ export const ProEditorWorkspace = () => {
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [storedVideoUrl, setStoredVideoUrl] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -60,6 +71,9 @@ export const ProEditorWorkspace = () => {
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("Untitled Video");
   const [editingManualSubtitle, setEditingManualSubtitle] = useState<number | null>(null);
+  const [initializing, setInitializing] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // History management for undo/redo
@@ -101,6 +115,29 @@ export const ProEditorWorkspace = () => {
     }
   }, [historyIndex, captionHistory, toast]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (isMounted) {
+        setCurrentUser(user ?? null);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) {
+        setCurrentUser(session?.user ?? null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const handleRedo = useCallback(() => {
     if (historyIndex < captionHistory.length - 1) {
       isUpdatingFromHistory.current = true;
@@ -116,28 +153,6 @@ export const ProEditorWorkspace = () => {
       });
     }
   }, [historyIndex, captionHistory, toast]);
-
-  // Load video from sessionStorage if available
-  useEffect(() => {
-    const loadVideoData = sessionStorage.getItem("loadVideo");
-    if (loadVideoData) {
-      try {
-        const videoData = JSON.parse(loadVideoData);
-        setCurrentVideoId(videoData.id);
-        setVideoTitle(videoData.title);
-        setVideoUrl(videoData.video_url);
-        setCaptions(videoData.captions || []);
-        sessionStorage.removeItem("loadVideo");
-        
-        toast({
-          title: "Video loaded",
-          description: `Editing: ${videoData.title}`,
-        });
-      } catch (error) {
-        console.error("Error loading video:", error);
-      }
-    }
-  }, []);
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -155,14 +170,43 @@ export const ProEditorWorkspace = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
-  // Load saved videos when component mounts
+  // Load saved videos or session project when component mounts
   useEffect(() => {
-    const loadSavedVideos = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+    const bootstrapProject = async () => {
+      const loadVideoData = sessionStorage.getItem("loadVideo");
 
-        // Get most recent video with captions
+      if (loadVideoData) {
+        try {
+          const videoData = JSON.parse(loadVideoData);
+          setCurrentVideoId(videoData.id);
+          setVideoTitle(videoData.title);
+          setVideoUrl(videoData.video_url);
+          setCaptions(videoData.captions || []);
+          setStoredVideoUrl(videoData.video_url || null);
+          setVideoFile(null);
+          sessionStorage.removeItem("loadVideo");
+
+          toast({
+            title: "Video loaded",
+            description: `Editing: ${videoData.title}`,
+          });
+        } catch (error) {
+          console.error("Error loading video:", error);
+        } finally {
+          setInitializing(false);
+        }
+        return;
+      }
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setInitializing(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("videos")
           .select("*")
@@ -172,15 +216,20 @@ export const ProEditorWorkspace = () => {
           .limit(1)
           .maybeSingle();
 
-        if (error || !data) return;
+        if (error || !data) {
+          setInitializing(false);
+          return;
+        }
 
-        // Restore the video
         setCurrentVideoId(data.id);
         setVideoTitle(data.title);
         setVideoUrl(data.video_url);
+        setStoredVideoUrl(data.video_url);
+        setVideoFile(null);
+
         if (data.captions && Array.isArray(data.captions)) {
           setCaptions(data.captions as unknown as Caption[]);
-          
+
           toast({
             title: "Welcome back!",
             description: `Restored: ${data.title}`,
@@ -188,15 +237,17 @@ export const ProEditorWorkspace = () => {
         }
       } catch (error) {
         console.error("Error loading saved videos:", error);
+      } finally {
+        setInitializing(false);
       }
     };
 
-    loadSavedVideos();
+    bootstrapProject();
   }, [toast]);
 
   // Auto-save captions when they change
   useEffect(() => {
-    if (!captions.length || !currentVideoId || !videoUrl) return;
+    if (!captions.length || !currentVideoId) return;
 
     const autoSave = async () => {
       try {
@@ -220,7 +271,7 @@ export const ProEditorWorkspace = () => {
 
     const timeoutId = setTimeout(autoSave, 2000); // Debounce 2 seconds
     return () => clearTimeout(timeoutId);
-  }, [captions, currentVideoId, videoTitle, videoUrl]);
+  }, [captions, currentVideoId, videoTitle]);
 
   const handleVideoSelect = async (file: File) => {
     // Track upload started
@@ -232,9 +283,16 @@ export const ProEditorWorkspace = () => {
     setVideoFile(file);
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
+    setStoredVideoUrl(null);
     const id = `video-${Date.now()}`;
     setVideoId(id);
     setVideoTitle(file.name.replace(/\.[^/.]+$/, "")); // Remove file extension
+    setCurrentVideoId(null);
+    setCaptions([]);
+    setCaptionHistory([]);
+    setHistoryIndex(-1);
+    setSelectedWordIndex(null);
+    setInitializing(false);
 
     // Track project created
     await analytics.trackProjectCreated(undefined, { videoId: id });
@@ -244,22 +302,34 @@ export const ProEditorWorkspace = () => {
 
   const saveVideoToDatabase = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !videoFile || !videoUrl) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || !videoUrl) return;
 
-      // Upload video to storage
-      const fileName = `${user.id}/${Date.now()}-${videoFile.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("videos")
-        .upload(fileName, videoFile);
+      let publicUrl = storedVideoUrl;
 
-      if (uploadError) throw uploadError;
+      if (!publicUrl) {
+        if (!videoFile) {
+          console.warn("No video file available to upload");
+          return;
+        }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("videos")
-        .getPublicUrl(fileName);
+        const fileName = `${user.id}/${Date.now()}-${videoFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("videos")
+          .upload(fileName, videoFile);
 
-      // Save or update video record
+        if (uploadError) throw uploadError;
+
+        const {
+          data: { publicUrl: uploadedUrl },
+        } = supabase.storage.from("videos").getPublicUrl(fileName);
+
+        publicUrl = uploadedUrl;
+        setStoredVideoUrl(uploadedUrl);
+      }
+
       const videoData = {
         user_id: user.id,
         title: videoTitle,
@@ -268,30 +338,26 @@ export const ProEditorWorkspace = () => {
         duration: videoRef.current?.duration || null,
       };
 
+      let createdVideoId = currentVideoId;
+
       if (currentVideoId) {
-        // Update existing video
-        const { error } = await supabase
-          .from("videos")
-          .update(videoData)
-          .eq("id", currentVideoId);
-        
+        const { error } = await supabase.from("videos").update(videoData).eq("id", currentVideoId);
         if (error) throw error;
       } else {
-        // Create new video
-        const { data, error } = await supabase
-          .from("videos")
-          .insert(videoData)
-          .select()
-          .single();
-        
+        const { data, error } = await supabase.from("videos").insert(videoData).select().single();
         if (error) throw error;
+        createdVideoId = data.id;
         setCurrentVideoId(data.id);
       }
 
-      toast({
-        title: "Video saved",
-        description: "Your work has been saved successfully",
-      });
+      if (!createdVideoId) return;
+
+      if (!currentVideoId) {
+        toast({
+          title: "Video saved",
+          description: "Your work has been saved successfully",
+        });
+      }
     } catch (error) {
       console.error("Error saving video:", error);
       toast({
@@ -566,7 +632,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   };
 
   const downloadVideoWithCaptions = async () => {
-    if (!videoRef.current || !videoFile) {
+    if (!videoRef.current) {
       throw new Error("No video loaded");
     }
 
@@ -744,7 +810,52 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
   };
 
-  if (!videoFile) {
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await supabase.auth.signOut();
+      sessionStorage.removeItem("loadVideo");
+      setCaptions([]);
+      setCaptionHistory([]);
+      setHistoryIndex(-1);
+      setSelectedWordIndex(null);
+      setVideoUrl(null);
+      setStoredVideoUrl(null);
+      setVideoFile(null);
+      setVideoId(null);
+      setCurrentVideoId(null);
+      setVideoTitle("Untitled Video");
+      setInitializing(false);
+      toast({
+        title: "Signed out",
+        description: "See you next time!",
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      toast({
+        title: "Sign out failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  if (initializing) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Restoring your last project...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!videoUrl) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="max-w-2xl w-full px-6">
@@ -809,7 +920,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
           <h1 className="text-base md:text-lg font-semibold">Caption Editor</h1>
           <Separator orientation="vertical" className="h-6 hidden md:block" />
           <span className="text-xs md:text-sm text-muted-foreground truncate max-w-[150px] md:max-w-none">
-            {videoFile.name}
+            {videoTitle}
           </span>
         </div>
 
@@ -848,7 +959,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             variant="ghost"
             size="sm"
             className="gap-2"
-            disabled={!videoFile}
+            disabled={!videoUrl}
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Add Subtitle</span>
@@ -873,6 +984,53 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
           </Button>
+
+          {currentUser && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {currentUser.email?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:inline max-w-[140px] truncate text-xs">
+                    {currentUser.email}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-60" align="end" forceMount>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold">
+                      {currentUser.user_metadata?.name || "Account"}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {currentUser.email}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/my-videos")} className="gap-2">
+                  <FolderOpen className="w-4 h-4" />
+                  <span>My Videos</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="gap-2 text-destructive focus:text-destructive"
+                  disabled={isSigningOut}
+                >
+                  {isSigningOut ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <LogOut className="w-4 h-4" />
+                  )}
+                  <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
