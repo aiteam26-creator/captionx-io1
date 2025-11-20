@@ -170,7 +170,7 @@ export const ProEditorWorkspace = () => {
           .not("captions", "is", null)
           .order("updated_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error || !data) return;
 
@@ -180,25 +180,25 @@ export const ProEditorWorkspace = () => {
         setVideoUrl(data.video_url);
         if (data.captions && Array.isArray(data.captions)) {
           setCaptions(data.captions as unknown as Caption[]);
+          
+          toast({
+            title: "Welcome back!",
+            description: `Restored: ${data.title}`,
+          });
         }
-
-        toast({
-          title: "Welcome back!",
-          description: "Your previous work has been restored",
-        });
       } catch (error) {
         console.error("Error loading saved videos:", error);
       }
     };
 
     loadSavedVideos();
-  }, []);
+  }, [toast]);
 
-  // Auto-save captions periodically
+  // Auto-save captions when they change
   useEffect(() => {
-    if (!captions.length || !currentVideoId) return;
+    if (!captions.length || !currentVideoId || !videoUrl) return;
 
-    const autoSaveInterval = setInterval(async () => {
+    const autoSave = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -207,16 +207,20 @@ export const ProEditorWorkspace = () => {
           .from("videos")
           .update({ 
             captions: JSON.parse(JSON.stringify(captions)) as any,
-            title: videoTitle 
+            title: videoTitle,
+            updated_at: new Date().toISOString()
           })
           .eq("id", currentVideoId);
+
+        console.log("Auto-saved successfully");
       } catch (error) {
         console.error("Auto-save error:", error);
       }
-    }, 30000); // Auto-save every 30 seconds
+    };
 
-    return () => clearInterval(autoSaveInterval);
-  }, [captions, currentVideoId, videoTitle]);
+    const timeoutId = setTimeout(autoSave, 2000); // Debounce 2 seconds
+    return () => clearTimeout(timeoutId);
+  }, [captions, currentVideoId, videoTitle, videoUrl]);
 
   const handleVideoSelect = async (file: File) => {
     // Track upload started
