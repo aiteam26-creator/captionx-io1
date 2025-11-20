@@ -155,6 +155,69 @@ export const ProEditorWorkspace = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
+  // Load saved videos when component mounts
+  useEffect(() => {
+    const loadSavedVideos = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get most recent video with captions
+        const { data, error } = await supabase
+          .from("videos")
+          .select("*")
+          .eq("user_id", user.id)
+          .not("captions", "is", null)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error || !data) return;
+
+        // Restore the video
+        setCurrentVideoId(data.id);
+        setVideoTitle(data.title);
+        setVideoUrl(data.video_url);
+        if (data.captions && Array.isArray(data.captions)) {
+          setCaptions(data.captions as unknown as Caption[]);
+        }
+
+        toast({
+          title: "Welcome back!",
+          description: "Your previous work has been restored",
+        });
+      } catch (error) {
+        console.error("Error loading saved videos:", error);
+      }
+    };
+
+    loadSavedVideos();
+  }, []);
+
+  // Auto-save captions periodically
+  useEffect(() => {
+    if (!captions.length || !currentVideoId) return;
+
+    const autoSaveInterval = setInterval(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase
+          .from("videos")
+          .update({ 
+            captions: JSON.parse(JSON.stringify(captions)) as any,
+            title: videoTitle 
+          })
+          .eq("id", currentVideoId);
+      } catch (error) {
+        console.error("Auto-save error:", error);
+      }
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearInterval(autoSaveInterval);
+  }, [captions, currentVideoId, videoTitle]);
+
   const handleVideoSelect = async (file: File) => {
     // Track upload started
     await analytics.trackUploadStarted(undefined, { 
