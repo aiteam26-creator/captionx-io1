@@ -70,6 +70,7 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             variant: "destructive",
           });
         } else if (data.user) {
+          await analytics.trackAuthSuccess(data.user.id);
           toast({
             title: "Account created!",
             description: "You're now signed in",
@@ -90,6 +91,7 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             variant: "destructive",
           });
         } else if (data.user) {
+          await analytics.trackAuthSuccess(data.user.id);
           toast({
             title: "Welcome back!",
             description: "You're now signed in",
