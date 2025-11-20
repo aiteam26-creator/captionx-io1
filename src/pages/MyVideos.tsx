@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Play, Download, Trash2, Video, LogOut, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Download, Trash2, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { formatDistanceToNow } from "date-fns";
@@ -22,7 +22,6 @@ interface SavedVideo {
 const MyVideos = () => {
   const [videos, setVideos] = useState<SavedVideo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [signingOut, setSigningOut] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,28 +54,6 @@ const MyVideos = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      setSigningOut(true);
-      await supabase.auth.signOut();
-      sessionStorage.removeItem("loadVideo");
-      toast({
-        title: "Signed out",
-        description: "Come back soon!",
-      });
-      navigate("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Sign out failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setSigningOut(false);
     }
   };
 
@@ -121,23 +98,7 @@ const MyVideos = () => {
             </Button>
             <h1 className="text-2xl font-semibold">My Videos</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={handleSignOut}
-              disabled={signingOut}
-            >
-              {signingOut ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogOut className="h-4 w-4" />
-              )}
-              <span className="hidden sm:inline">{signingOut ? "Signing out..." : "Sign out"}</span>
-            </Button>
-          </div>
+          <ThemeToggle />
         </div>
       </div>
 
