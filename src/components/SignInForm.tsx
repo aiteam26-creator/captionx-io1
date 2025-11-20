@@ -13,6 +13,7 @@ interface SignInFormProps {
 export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
@@ -20,10 +21,10 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim()) {
+    if (!email.trim() || !password.trim()) {
       toast({
         title: "Required fields",
-        description: "Please enter your email",
+        description: "Please enter email and password",
         variant: "destructive",
       });
       return;
@@ -38,53 +39,60 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
       if (isSignUp) {
-        // Sign up with magic link
-        const { error } = await supabase.auth.signInWithOtp({
+        // Sign up with email and password
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
+          password: password,
           options: {
             data: {
               name: name.trim(),
             },
-            emailRedirectTo: `${window.location.origin}/`,
           },
         });
 
         if (error) {
           toast({
-            title: "Error",
+            title: "Sign up failed",
             description: error.message,
             variant: "destructive",
           });
-        } else {
+        } else if (data.user) {
           toast({
-            title: "Check your email",
-            description: "We've sent you a magic link to complete sign up.",
+            title: "Account created!",
+            description: "You're now signed in",
           });
           onSuccess();
         }
       } else {
-        // Sign in with magic link
-        const { error } = await supabase.auth.signInWithOtp({
+        // Sign in with email and password
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
+          password: password,
         });
 
         if (error) {
           toast({
-            title: "Error",
+            title: "Sign in failed",
             description: error.message,
             variant: "destructive",
           });
-        } else {
+        } else if (data.user) {
           toast({
-            title: "Check your email",
-            description: "We've sent you a magic link to sign in.",
+            title: "Welcome back!",
+            description: "You're now signed in",
           });
           onSuccess();
         }
@@ -141,6 +149,20 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
                 className="mt-1"
               />
             </div>
+
+            <div>
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                minLength={6}
+                className="mt-1"
+              />
+            </div>
           </div>
 
           <Button
@@ -148,7 +170,7 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
             className="w-full"
             disabled={loading}
           >
-            {loading ? "Sending magic link..." : (isSignUp ? "Sign Up" : "Sign In")}
+            {loading ? (isSignUp ? "Creating account..." : "Signing in...") : (isSignUp ? "Sign Up" : "Sign In")}
           </Button>
 
           <div className="text-center">
