@@ -176,7 +176,16 @@ export const EditorWorkspace = () => {
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw error;
+        const errorMessage = error.message || 'Unknown error occurred';
+        
+        // Check for specific error types
+        if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+          throw new Error('OpenAI API quota exceeded. Please update your API key with valid credits.');
+        } else if (errorMessage.includes('401') || errorMessage.includes('authentication')) {
+          throw new Error('OpenAI API authentication failed. Please check your API key.');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (!data || !data.captions) {
@@ -196,13 +205,16 @@ export const EditorWorkspace = () => {
       });
     } catch (error) {
       console.error('Error transcribing video:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate captions. Please try again.';
+      
       toast({
-        title: "Error",
-        description: "Failed to generate captions. Please try again.",
+        title: "Transcription Failed",
+        description: errorMessage,
         variant: "destructive",
-        duration: 5000,
+        duration: 8000,
       });
       setIsProcessing(false);
+      setProgress(0);
     }
   };
 
