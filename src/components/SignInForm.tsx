@@ -14,6 +14,7 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +54,7 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
           title: "Check your email",
           description: "We've sent you a magic link to sign in.",
         });
-        onSuccess();
+        setEmailSent(true);
       }
     } catch (err) {
       toast({
@@ -65,6 +66,31 @@ export const SignInForm = ({ onSuccess }: SignInFormProps) => {
       setLoading(false);
     }
   };
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Check your email
+            </h2>
+            <p className="text-muted-foreground">
+              We've sent a magic link to <strong>{email}</strong>. Click the link in your email to sign in.
+            </p>
+          </div>
+          
+          <Button
+            onClick={() => setEmailSent(false)}
+            variant="outline"
+            className="w-full"
+          >
+            Send another link
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
