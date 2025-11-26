@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
 const Index = () => {
-  const [showEditor, setShowEditor] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -21,9 +20,6 @@ const Index = () => {
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
         setShowSignIn(false);
-        setShowEditor(true);
-      } else {
-        setShowEditor(false);
       }
       setLoading(false);
     });
@@ -32,9 +28,6 @@ const Index = () => {
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
-      if (existingSession?.user) {
-        setShowEditor(true);
-      }
       setLoading(false);
     });
 
@@ -42,23 +35,9 @@ const Index = () => {
   }, []);
 
   const handleTryNow = () => {
-    if (user) {
-      // User already signed in, show editor directly
-      setShowEditor(true);
-      setTimeout(() => {
-        document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      // Show sign in form
+    if (!user) {
       setShowSignIn(true);
     }
-  };
-
-  const handleSignInSuccess = () => {
-    setShowEditor(true);
-    setTimeout(() => {
-      document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
   };
 
   if (loading) {
@@ -72,18 +51,19 @@ const Index = () => {
     );
   }
 
-  if (showSignIn && !user) {
-    return <SignInForm onSuccess={handleSignInSuccess} />;
-  }
-
-  // If user is logged in, show only the editor
-  if (user && showEditor) {
+  // If user is logged in, always show the editor
+  if (user) {
     return (
       <div className="min-h-screen bg-background">
         <ProEditorWorkspace />
         <Footer />
       </div>
     );
+  }
+
+  // Show sign-in form if user clicked "Start Creating"
+  if (showSignIn) {
+    return <SignInForm onSuccess={() => {}} />;
   }
 
   // Show landing page for non-authenticated users
